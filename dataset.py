@@ -514,8 +514,7 @@ class VisualGenomeFeatureDataset(Dataset):
         return len(self.entries)
 
 
-def tfidf_from_questions(names, dictionary, dataroot='data',
-                         target=['vqa', 'vg']):
+def tfidf_from_questions(names, dictionary, dataroot='data', target=['vqa', 'vg'], **kwargs):
     # rows, cols for uncoalesce sparse matrix
     inds = [[], []]
     df = dict()
@@ -533,6 +532,10 @@ def tfidf_from_questions(names, dictionary, dataroot='data',
             if c[1] < N:
                 inds[0].append(c[1])
                 inds[1].append(c[0])
+
+    if 'dataroot' in kwargs and kwargs['dataroot'] is not None:
+        dataroot = os.path.join(kwargs['dataroot'], dataroot)
+        print(dataroot)
 
     # VQA 2.0
     if 'vqa' in target:

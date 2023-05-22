@@ -176,11 +176,13 @@ if __name__ == '__main__':
 
     model = build_regat(val_dset, args).to(device)
 
+    kwargs = { 'dataroot' : args.data_folder } 
+
     tfidf = None
     weights = None
     if args.tfidf:
         tfidf, weights = tfidf_from_questions(['train', 'val', 'test2015'],
-                                              dictionary)
+                                              dictionary, **kwargs)
     model.w_emb.init_embedding(join(args.data_folder,
                                     'glove/glove6b_init_300d.npy'),
                                tfidf, weights)

@@ -1,10 +1,10 @@
 Found 2 GPU cards for training
-Choose random seed 2706
-loading dictionary from ./data/glove/dictionary.pkl
-loading features from h5 file ./data/Bottom-up-features-adaptive/val.hdf5
+Choose random seed 3246
+loading dictionary from /rwthfs/rz/cluster/hpcwork/lect0099/vqa_regat/data/glove/dictionary.pkl
+loading features from h5 file /rwthfs/rz/cluster/hpcwork/lect0099/vqa_regat/data//Bottom-up-features-adaptive/val.hdf5
 Setting semantic adj matrix to None...
 Setting spatial adj matrix to None...
-loading features from h5 file ./data/Bottom-up-features-adaptive/train.hdf5
+loading features from h5 file /rwthfs/rz/cluster/hpcwork/lect0099/vqa_regat/data//Bottom-up-features-adaptive/train.hdf5
 Setting semantic adj matrix to None...
 Setting spatial adj matrix to None...
 Building ReGAT model with implicit relation and butd fusion method
