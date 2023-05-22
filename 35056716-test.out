@@ -127,3 +127,8 @@ nParams=	41192896
 optim: adamax lr=0.0010, decay_step=2, decay_rate=0.25,grad_clip=0.25
 LR decay epochs: 15,17,19
 gradual warmup lr: 0.0005
+epoch 0, time: 1354.94
+	train_loss: 9.26, norm: 9.7904, score: 33.41
+	eval score: 42.03 (92.66)
+saving current model weights to folder
+gradual warmup lr: 0.0010
