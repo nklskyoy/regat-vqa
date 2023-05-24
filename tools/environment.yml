@@ -1,4 +1,3 @@
-name: test2
 channels:
   - pytorch
   - defaults
@@ -26,7 +25,6 @@ dependencies:
   - openssl=1.1.1d=h7b6447c_2
   - pip=19.2.3=py37_0
   - pycparser=2.19=py37_0
-  - python=3.7.4=h265db76_1
   - readline=7.0=h7b6447c_5
   - setuptools=41.2.0=py37_0
   - six=1.12.0=py37_0
