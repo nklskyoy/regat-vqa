@@ -2,17 +2,17 @@
 
 ### SBATCH Section
 
+#SBATCH --account=lect0099
 #SBATCH --job-name=VQA-ReGAT
 #SBATCH --output=%j-test.out
 #SBATCH --error=%j-test.err
-#SBATCH --nodes=2
-#SBATCH --gres=gpu:volta:2
+#SBATCH --nodes=1
+#SBATCH  --gpus-per-node=2
 #SBATCH --mem=64G
 #SBATCH --time=08:00:00
 
-#SBATCH --output=/home/hf201627/dev/lab2/vqa_regat/sbatch-logs/o_simple-train
 module load CUDA/11.8.0
-source /rwthfs/rz/cluster/home/hf201627/miniconda3/bin/activate regat-origin
+source /home/hf201627/anaconda3/bin/activate regat
 
 # By default, run.sh operates in code directory
 #cd ${REGAT_CODE_PATH}
