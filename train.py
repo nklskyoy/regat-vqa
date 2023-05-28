@@ -21,7 +21,7 @@ import utils
 from model.position_emb import prepare_graph_variables
 
 import wandb 
-wandb.login()
+
 
 
 def instance_bce_with_logits(logits, labels, reduction='mean'):
@@ -45,10 +45,17 @@ def compute_score_with_logits(logits, labels, device):
 
 def train(model, train_loader, eval_loader, args, device=torch.device("cuda")):    
     wandb_run_name = os.path.basename(args.output)
-    
+    step = 0
     # with torch.autograd.detect_anomaly():
     with wandb.init(project='vqa_regat', entity='lect0099', name=wandb_run_name, 
                     job_type="train_spatial_ban", group='optimizers_regat') as run:
+        
+        logger = utils.WandbLogger(
+            output_name=os.path.join(args.output, 'log.txt'),
+            reset=False,
+            run=run
+        )
+        
         run.config.learning_rate = args.base_lr
         run.config.epochs = args.epochs 
         run.config.optimizer = "torch.optim" + args.optimizer
@@ -72,15 +79,19 @@ def train(model, train_loader, eval_loader, args, device=torch.device("cuda")):
             optim = torch.optim.Adamax(filter(lambda p: p.requires_grad, model.parameters()),
                                        lr=lr_default, weight_decay=args.weight_decay) 
 
-        logger = utils.Logger(os.path.join(args.output, 'log.txt'))
+ 
         best_eval_score = 0
 
-        utils.print_model(model, logger)
+        #utils.print_model(model, logger)
+        """
         logger.write('optim: adamax lr=%.4f, decay_step=%d, decay_rate=%.2f,'
                     % (lr_default, args.lr_decay_step,
                         args.lr_decay_rate) + 'grad_clip=%.2f' % args.grad_clip)
+        
         logger.write('LR decay epochs: '+','.join(
                                             [str(i) for i in lr_decay_epochs]))
+
+        """
         last_eval_score, eval_score = 0, 0
         relation_type = train_loader.dataset.relation_type
 
@@ -93,15 +104,17 @@ def train(model, train_loader, eval_loader, args, device=torch.device("cuda")):
             if epoch < len(gradual_warmup_steps):
                 for i in range(len(optim.param_groups)):
                     optim.param_groups[i]['lr'] = gradual_warmup_steps[epoch]
+                """
                 logger.write('gradual warmup lr: %.4f' %
                             optim.param_groups[-1]['lr'])
+                """
             elif (epoch in lr_decay_epochs or
                 eval_score < last_eval_score and args.lr_decay_based_on_val):
                 for i in range(len(optim.param_groups)):
                     optim.param_groups[i]['lr'] *= args.lr_decay_rate
-                logger.write('decreased lr: %.4f' % optim.param_groups[-1]['lr'])
-            else:
-                logger.write('lr: %.4f' % optim.param_groups[-1]['lr'])
+                #logger.write('decreased lr: %.4f' % optim.param_groups[-1]['lr'])
+            #else:
+                #logger.write('lr: %.4f' % optim.param_groups[-1]['lr'])
             last_eval_score = eval_score
             
             mini_batch_count = 0
@@ -126,14 +139,15 @@ def train(model, train_loader, eval_loader, args, device=torch.device("cuda")):
                 mini_batch_count += 1
 
                 if mini_batch_count == batch_multiplier:
-                   # init wandb logging (per batch, not relevant)
-                   # run.log({"loss": loss}) 
+                    #init wandb logging (per batch, not relevant)
+                    logger.log({"train_loss": loss, "epoch": epoch + ((i+1)/len(train_loader))}, step=step) 
                     
                     total_norm += nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
                     count_norm += 1
                     optim.step()
                     optim.zero_grad()
                     mini_batch_count = 0
+                    step += 1
 
                 batch_score = compute_score_with_logits(pred, target, device).sum()
                 total_loss += loss.data.item() * batch_multiplier * v.size(0)
@@ -168,19 +182,20 @@ def train(model, train_loader, eval_loader, args, device=torch.device("cuda")):
                     model, eval_loader, device, args)
 
             # init wandb logging
-            run.log({"epoch": epoch, "train_loss": total_loss, "train_score": train_score}) 
-
+            logger.log({"epoch": epoch, "train_loss": total_loss, "train_score": train_score}) 
+            """
             logger.write('epoch %d, time: %.2f' % (epoch, time.time()-t))
             logger.write('\ttrain_loss: %.2f, norm: %.4f, score: %.2f'
                         % (total_loss, total_norm / count_norm, train_score))
+            """
             if eval_loader is not None:
                 
                 # init wandb logging
-                run.log({"eval_score": 100 * eval_score})
-                
+                logger.log({"eval_score": 100 * eval_score})
+                """
                 logger.write('\teval score: %.2f (%.2f)'
                             % (100 * eval_score, 100 * bound))
-
+                """
                 if entropy is not None:
                     info = ''
                     for i in range(entropy.size(0)):
