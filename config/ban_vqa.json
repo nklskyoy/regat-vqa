@@ -8,7 +8,7 @@
     "grad_accu_steps": 1,
     "grad_clip": 0.25,
     "weight_decay": 0,
-    "batch_size": 64,
+    "batch_size": 128,
     "output": "/hpcwork/lect0099/saved_models",
     "log_interval": -1,
     "dataset": "vqa",
