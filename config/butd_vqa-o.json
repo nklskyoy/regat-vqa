@@ -23,5 +23,6 @@
     "relation_type": "implicit",
     "residual_connection": true,
     "label_bias": false,
-    "tfidf": true
+    "tfidf": true,
+    "wandb_api_key" : "4eeb4bff5fc5678d495fd6ac0a3c0a8bfab3ac3c"
 }

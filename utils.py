@@ -199,6 +199,12 @@ class Logger(object):
         print(msg)
 
 
+class WandbLogger(Logger):
+    def __init__(self, output_name, reset=False):
+        super().__init__(output_name, reset)
+
+
+
 def create_glove_embedding_init(idx2word, glove_file):
     word2emb = {}
     with open(glove_file, 'r', encoding='utf-8') as f:
