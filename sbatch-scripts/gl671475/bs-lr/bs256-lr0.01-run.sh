@@ -8,7 +8,7 @@
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:volta:2
 #SBATCH --mem-per-gpu=32G
-#SBATCH --time=04:30:00
+#SBATCH --time=08:00:00
 
 module load CUDA/11.8.0
 source /rwthfs/rz/cluster/home/gl671475/miniconda3/bin/activate
@@ -34,10 +34,10 @@ cd ${REGAT_LOCAL_CODE_PATH}
 python3 main.py \
     --config config/ban_vqa.json \
     --relation_type spatial \
-    --epochs 10 \
+    --epochs 20 \
     --batch_size 256 \
     --base_lr 0.01 \
-    --name "bs_256_lr_0.01_ep_10" \
+    --name "bs_256_lr_0.01_ep_20" \
     --job_id ${SLURM_JOB_ID} \
     --output ${REGAT_SAVE_MODELS_TRAIN_PATH}
 

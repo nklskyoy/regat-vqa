@@ -6,11 +6,7 @@
 #SBATCH --output=%j-output.log
 #SBATCH --error=%j-error.log
 #SBATCH --nodes=1
-#SBATCH --array=1-9
-#SBATCH --ntasks-per-node=1
-#SBATCH --gres=gpu:volta:2
-#SBATCH --mem-per-gpu=32G
-#SBATCH --time=02:00:00
+#SBATCH --time=10:00:00
 
 # Extracts the TID of the user
 USERNAME=$(whoami)
@@ -27,6 +23,6 @@ lr_list=(0.001 0.005 0.01)
 
 for bs in "${bs_list[@]}"; do
   for lr in "${lr_list[@]}"; do
-    srun bs-lr/bs${bs}-lr${lr}-run.sh
+    sbatch bs-lr/bs${bs}-lr${lr}-run.sh
   done
 done
