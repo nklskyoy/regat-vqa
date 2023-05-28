@@ -6,7 +6,7 @@
 #SBATCH --output=%j-output.log
 #SBATCH --error=%j-error.log
 #SBATCH --nodes=1
-#SBATCH --time=10:00:00
+#SBATCH --time=15:00
 
 # Extracts the TID of the user
 USERNAME=$(whoami)
