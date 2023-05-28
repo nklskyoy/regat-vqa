@@ -80,8 +80,6 @@ def train(model, train_loader, eval_loader, args, device=torch.device("cuda")):
             optim = torch.optim.Adamax(filter(lambda p: p.requires_grad, model.parameters()),
                                        lr=lr_default, weight_decay=args.weight_decay) 
 
- 
-        logger = utils.Logger(os.path.join(args.output, 'log.txt'))
         best_eval_score = 0
 
         utils.print_model(model, logger)
