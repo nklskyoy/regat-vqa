@@ -43,12 +43,7 @@ def compute_score_with_logits(logits, labels, device):
     return scores
 
 
-def train(model, train_loader, eval_loader, args, device=torch.device("cuda")):
-    # wandb_run_name = '_'.join([os.path.basename(args.output), args.optimizer])
-    # if args.optimizer == 'SGD':
-    #     wandb_run_name = '_'.join([wandb_run_name, str(args.momentum)])
-    # wandb_run_name = '_'.join([wandb_run_name, str(args.base_lr), str(args.weight_decay), str(args.epochs)])
-    
+def train(model, train_loader, eval_loader, args, device=torch.device("cuda")):    
     wandb_run_name = os.path.basename(args.output)
     
     # with torch.autograd.detect_anomaly():
@@ -74,7 +69,7 @@ def train(model, train_loader, eval_loader, args, device=torch.device("cuda")):
             optim = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()),
                                      lr=lr_default, weight_decay=args.weight_decay)
         else:
-            optim = torch.optim.Adamax(filter(lambda p: p.requires_grad,model.parameters()),
+            optim = torch.optim.Adamax(filter(lambda p: p.requires_grad, model.parameters()),
                                        lr=lr_default, weight_decay=args.weight_decay) 
 
         logger = utils.Logger(os.path.join(args.output, 'log.txt'))
