@@ -24,6 +24,9 @@ from model.position_emb import prepare_graph_variables
 from config.parser import Struct
 import utils
 
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning) 
+
 
 @torch.no_grad()
 def evaluate(model, dataloader, model_hps, args, device):
@@ -120,7 +123,7 @@ def parse_args():
     parser.add_argument('--save_logits', action='store_true',
                         help='save logits')
     parser.add_argument('--save_answers', action='store_true',
-                        help='save poredicted answers')
+                        help='save predicted answers')
 
     '''
     For loading expert pre-trained weights
@@ -138,7 +141,7 @@ def parse_args():
     parser.add_argument('--split', type=str, default="val",
                         choices=["train", "val", "test", "test2015"],
                         help="test for vqa_cp, test2015 for vqa")
-
+    
     args = parser.parse_args()
     return args
 

@@ -1,7 +1,14 @@
+# Ignoring all __pycache__ files
 __pycache__/
 model/__pycache__
 **/__pycache__
 **/**/__pycache__
+
+# Ignoring logging files
+*.out
 *.err
 *.log
+
+# Ignoring log and wandb dirs
 sbatch-logs/*
+wandb/*

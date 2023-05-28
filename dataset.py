@@ -25,7 +25,7 @@ COUNTING_ONLY = False
 
 
 # Following Trott et al. (ICLR 2018)
-#   Interpretable Counting for Visual Question Answering
+# Interpretable Counting for Visual Question Answering
 def is_howmany(q, a, label2ans):
     if 'how many' in q.lower() or \
        ('number of' in q.lower() and 'number of the' not in q.lower()) or \

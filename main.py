@@ -24,6 +24,8 @@ from utils import trim_collate
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning) 
 
+import wandb
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -47,6 +49,18 @@ def parse_args():
     parser.add_argument('--log_interval', type=int, default=-1,
                         help='Print log for certain steps')
     parser.add_argument('--seed', type=int, default=-1, help='random seed')
+    
+    '''
+    For fine-tuning (Optimizer settings, LR schedules, Batch-Norm and/or Layer-Norm)
+    '''
+    parser.add_argument('--optimizer', type=str, default='Adamax') # choose between [SGD+Momentum, Adam, AdamW]
+    parser.add_argument('--momentum', type=float, default=0.9) # vary momentum values
+    
+    '''
+    For log management and experimenting
+    '''
+    parser.add_argument('--name', type=str, default='base')
+    parser.add_argument('--job_id', type=int, default=-1)
 
     '''
     loading trained models
@@ -132,7 +146,7 @@ if __name__ == '__main__':
     n_device = torch.cuda.device_count()
     print("Found %d GPU cards for training" % (n_device))
     device = torch.device("cuda")
-    batch_size = args.batch_size*n_device
+    batch_size = args.batch_size * n_device
 
     torch.backends.cudnn.benchmark = True
 
@@ -260,16 +274,19 @@ if __name__ == '__main__':
                                   num_workers=4, collate_fn=trim_collate)
         eval_loader = DataLoader(val_dset, batch_size, shuffle=False,
                                  num_workers=4, collate_fn=trim_collate)
-
-    output_meta_folder = join(args.output, "regat_%s" % args.relation_type)
-    utils.create_dir(output_meta_folder)
-    args.output = output_meta_folder+"/%s_%s_%s_%d" % (
-                fusion_methods, args.relation_type,
-                args.dataset, args.seed)
+    
+    exp_name_list = [fusion_methods, args.relation_type, args.dataset, str(args.seed), args.name]
+    if args.job_id > 0: 
+        exp_name_list = [str(args.job_id)] + exp_name_list
+    
+    exp_name = '_'.join(exp_name_list)
+    args.output = join(args.output, exp_name)
+    
     if exists(args.output) and os.listdir(args.output):
         raise ValueError("Output directory ({}) already exists and is not "
                          "empty.".format(args.output))
     utils.create_dir(args.output)
+    
     with open(join(args.output, 'hps.json'), 'w') as writer:
         json.dump(vars(args), writer, indent=4)
     logger = utils.Logger(join(args.output, 'log.txt'))

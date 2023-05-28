@@ -20,6 +20,9 @@ from tqdm import tqdm
 import utils
 from model.position_emb import prepare_graph_variables
 
+import wandb 
+
+
 
 def instance_bce_with_logits(logits, labels, reduction='mean'):
     assert logits.dim() == 2
@@ -41,7 +44,28 @@ def compute_score_with_logits(logits, labels, device):
 
 
 def train(model, train_loader, eval_loader, args, device=torch.device("cuda")):
-    with torch.autograd.detect_anomaly():
+    # wandb_run_name = '_'.join([os.path.basename(args.output), args.optimizer])
+    # if args.optimizer == 'SGD':
+    #     wandb_run_name = '_'.join([wandb_run_name, str(args.momentum)])
+    # wandb_run_name = '_'.join([wandb_run_name, str(args.base_lr), str(args.weight_decay), str(args.epochs)])
+    wandb.login()
+    wandb_run_name = os.path.basename(args.output)
+    step = 0
+    # with torch.autograd.detect_anomaly():
+    with wandb.init(project='vqa_regat', entity='lect0099', name=wandb_run_name, 
+                    job_type="train_spatial_ban", group='optimizers_regat') as run:
+        
+        logger = utils.WandbLogger(
+            output_name=os.path.join(args.output, 'log.txt'),
+            reset=False,
+            run=run
+        )
+        
+        run.config.learning_rate = args.base_lr
+        run.config.epochs = args.epochs 
+        run.config.optimizer = "torch.optim" + args.optimizer
+        run.watch(model)
+        
         N = len(train_loader.dataset)
         lr_default = args.base_lr
         num_epochs = args.epochs
@@ -50,20 +74,29 @@ def train(model, train_loader, eval_loader, args, device=torch.device("cuda")):
         gradual_warmup_steps = [0.5 * lr_default, 1.0 * lr_default,
                                 1.5 * lr_default, 2.0 * lr_default]
 
-        optim = torch.optim.Adamax(filter(lambda p: p.requires_grad,
-                                        model.parameters()),
-                                lr=lr_default, betas=(0.9, 0.999), eps=1e-8,
-                                weight_decay=args.weight_decay) 
+        if args.optimizer == 'SGD':
+            optim = torch.optim.SGD(filter(lambda p: p.requires_grad, model.parameters()),
+                                    lr=lr_default, momentum=args.momentum, weight_decay=args.weight_decay)
+        elif args.optimizer == 'Adam':
+            optim = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()),
+                                     lr=lr_default, weight_decay=args.weight_decay)
+        else:
+            optim = torch.optim.Adamax(filter(lambda p: p.requires_grad,model.parameters()),
+                                       lr=lr_default, weight_decay=args.weight_decay) 
 
-        logger = utils.Logger(os.path.join(args.output, 'log.txt'))
+ 
         best_eval_score = 0
 
-        utils.print_model(model, logger)
+        #utils.print_model(model, logger)
+        """
         logger.write('optim: adamax lr=%.4f, decay_step=%d, decay_rate=%.2f,'
                     % (lr_default, args.lr_decay_step,
                         args.lr_decay_rate) + 'grad_clip=%.2f' % args.grad_clip)
+        
         logger.write('LR decay epochs: '+','.join(
                                             [str(i) for i in lr_decay_epochs]))
+
+        """
         last_eval_score, eval_score = 0, 0
         relation_type = train_loader.dataset.relation_type
 
@@ -76,50 +109,18 @@ def train(model, train_loader, eval_loader, args, device=torch.device("cuda")):
             if epoch < len(gradual_warmup_steps):
                 for i in range(len(optim.param_groups)):
                     optim.param_groups[i]['lr'] = gradual_warmup_steps[epoch]
+                """
                 logger.write('gradual warmup lr: %.4f' %
                             optim.param_groups[-1]['lr'])
+                """
             elif (epoch in lr_decay_epochs or
                 eval_score < last_eval_score and args.lr_decay_based_on_val):
                 for i in range(len(optim.param_groups)):
                     optim.param_groups[i]['lr'] *= args.lr_decay_rate
-                logger.write('decreased lr: %.4f' % optim.param_groups[-1]['lr'])
-            else:
-                logger.write('lr: %.4f' % optim.param_groups[-1]['lr'])
+                #logger.write('decreased lr: %.4f' % optim.param_groups[-1]['lr'])
+            #else:
+                #logger.write('lr: %.4f' % optim.param_groups[-1]['lr'])
             last_eval_score = eval_score
-
-            # mini_batch_count = 0
-            # batch_multiplier = args.grad_accu_steps
-            # for i, (v, norm_bb, q, target, _, _, bb, spa_adj_matrix,
-            #         sem_adj_matrix) in enumerate(train_loader):
-            #     batch_size = v.size(0)
-            #     num_objects = v.size(1)
-            #     if mini_batch_count == 0:
-            #         optim.step()
-            #         optim.zero_grad()
-            #         mini_batch_count = batch_multiplier
-
-            #     v = Variable(v).to(device)
-            #     norm_bb = Variable(norm_bb).to(device)
-            #     q = Variable(q).to(device)
-            #     target = Variable(target).to(device)
-            #     pos_emb, sem_adj_matrix, spa_adj_matrix = prepare_graph_variables(
-            #         relation_type, bb, sem_adj_matrix, spa_adj_matrix, num_objects,
-            #         args.nongt_dim, args.imp_pos_emb_dim, args.spa_label_num,
-            #         args.sem_label_num, device)
-            #     pred, att = model(v, norm_bb, q, pos_emb, sem_adj_matrix,
-            #                     spa_adj_matrix, target)
-            #     loss = instance_bce_with_logits(pred, target)
-
-            #     loss /= batch_multiplier
-            #     loss.backward()
-            #     mini_batch_count -= 1
-            #     total_norm += nn.utils.clip_grad_norm_(model.parameters(),
-            #                                         args.grad_clip)
-            #     count_norm += 1
-            #     batch_score = compute_score_with_logits(pred, target, device).sum()
-            #     total_loss += loss.data.item() * batch_multiplier * v.size(0)
-            #     train_score += batch_score
-            #     pbar.update(1)
             
             mini_batch_count = 0
             batch_multiplier = args.grad_accu_steps
@@ -143,11 +144,15 @@ def train(model, train_loader, eval_loader, args, device=torch.device("cuda")):
                 mini_batch_count += 1
 
                 if mini_batch_count == batch_multiplier:
+                    #init wandb logging (per batch, not relevant)
+                    logger.log({"train_loss": loss, "epoch": epoch + ((i+1)/len(train_loader))}, step=step) 
+                    
                     total_norm += nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
                     count_norm += 1
                     optim.step()
                     optim.zero_grad()
                     mini_batch_count = 0
+                    step += 1
 
                 batch_score = compute_score_with_logits(pred, target, device).sum()
                 total_loss += loss.data.item() * batch_multiplier * v.size(0)
@@ -163,6 +168,10 @@ def train(model, train_loader, eval_loader, args, device=torch.device("cuda")):
                     if i % args.log_interval == 0:
                         att_entropy /= count
                         average_loss /= count
+                        
+                        # init wandb logging (not printed, default log_interval is -1)
+                        run.log({"att_entropy": att_entropy, "average_loss": average_loss})
+                        
                         print("step {} / {} (epoch {}), ave_loss {:.3f},".format(
                                 i, len(train_loader), epoch,
                                 average_loss),
@@ -177,13 +186,21 @@ def train(model, train_loader, eval_loader, args, device=torch.device("cuda")):
                 eval_score, bound, entropy = evaluate(
                     model, eval_loader, device, args)
 
+            # init wandb logging
+            logger.log({"epoch": epoch, "train_loss": total_loss, "train_score": train_score}) 
+            """
             logger.write('epoch %d, time: %.2f' % (epoch, time.time()-t))
             logger.write('\ttrain_loss: %.2f, norm: %.4f, score: %.2f'
                         % (total_loss, total_norm / count_norm, train_score))
+            """
             if eval_loader is not None:
+                
+                # init wandb logging
+                logger.log({"eval_score": 100 * eval_score})
+                """
                 logger.write('\teval score: %.2f (%.2f)'
                             % (100 * eval_score, 100 * bound))
-
+                """
                 if entropy is not None:
                     info = ''
                     for i in range(entropy.size(0)):

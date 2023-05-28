@@ -10,11 +10,11 @@
 #SBATCH --mem=64G
 #SBATCH --time=01:00:00
 
-module load CUDA/11.8.0
-source /rwthfs/rz/cluster/home/gl671475/miniconda3/bin/activate
-conda activate regat_common
+export WANDB_API_KEY=4eeb4bff5fc5678d495fd6ac0a3c0a8bfab3ac3c
 
-export WANDB_API_KEY=32abfb91875c02ffd9d1f8d294baad4f5eabbdf7
+
+module load CUDA/11.8.0
+source /home/hf201627/anaconda3/bin/activate regat
 
 # Extracts the TID of the user
 USERNAME=$(whoami)
@@ -27,12 +27,12 @@ REGAT_SAVE_MODELS_EVAL_PATH="${REGAT_DATA_AND_MODELS_PATH}/saved_models/${USERNA
 
 
 # By default, run.sh operates in code directory
-cd ${REGAT_LOCAL_CODE_PATH}
+#cd ${REGAT_LOCAL_CODE_PATH}
 
 # Program Section
 
 # (Uncomment for training)
-python3 main.py --config config/ban_vqa.json --relation_type spatial  --epochs 1 --name "adamax_0.001_wd_0" --job_id ${SLURM_JOB_ID} --output ${REGAT_SAVE_MODELS_TRAIN_PATH}
+python3 main.py --config config/ban_vqa-o.json --relation_type spatial  --epochs 1 --name "adamax_0.001_wd_0" --job_id ${SLURM_JOB_ID} --output ${REGAT_SAVE_MODELS_TRAIN_PATH}
 REGAT_SAVE_EXPERIMENT_TRAIN_PATH=$(find ${REGAT_SAVE_MODELS_TRAIN_PATH} -type d -name "${SLURM_JOB_ID}*" -print -quit)  
 mv "./sbatch-scripts/${SLURM_JOB_ID}-"*".log" ${REGAT_SAVE_EXPERIMENT_TRAIN_PATH}
 

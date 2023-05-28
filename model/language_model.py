@@ -15,11 +15,13 @@ import torch.nn.functional as F
 
 
 class WordEmbedding(nn.Module):
-    """Word Embedding
+    """ 
+    Word Embedding
 
-    The ntoken-th dim is used for padding_idx, which agrees *implicitly*
+    The ntoken-th dim is used for padding_idx, which agrees *implicitly* 
     with the definition in Dictionary.
     """
+    
     def __init__(self, ntoken, emb_dim, dropout, op=''):
         super(WordEmbedding, self).__init__()
         self.op = op
@@ -54,10 +56,9 @@ class WordEmbedding(nn.Module):
 
 
 class QuestionEmbedding(nn.Module):
-    def __init__(self, in_dim, num_hid, nlayers, bidirect, dropout,
-                 rnn_type='GRU'):
-        """Module for question embedding
-        """
+    def __init__(self, in_dim, num_hid, nlayers, bidirect, dropout, rnn_type='GRU'):
+        """ Module for question embedding """
+        
         super(QuestionEmbedding, self).__init__()
         assert rnn_type == 'LSTM' or rnn_type == 'GRU'
         rnn_cls = nn.LSTM if rnn_type == 'LSTM' else nn.GRU \
