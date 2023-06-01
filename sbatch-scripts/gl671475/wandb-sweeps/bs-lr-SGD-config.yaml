@@ -9,7 +9,7 @@ parameters:
   relation_type:
     value: "spatial"
   batch_size:
-    values: [192]
+    value: 192
   base_lr:
     values: [0.001, 0.005, 0.01]
   optimizer:
@@ -21,7 +21,7 @@ command:
   - ${program}
   - --name
   - "bs_192_lr_opt_SGD_ep_20"
-  - -- output
+  - --output
   - "/rwthfs/rz/cluster/hpcwork/lect0099/saved_models/gl671475"
   - --sweeps
   - ${args} 

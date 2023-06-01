@@ -80,7 +80,7 @@ def parse_args():
     For fine-tuning (Optimizer settings, LR schedules, Batch-Norm and/or Layer-Norm)
     '''
     parser.add_argument('--optimizer', type=str, default='Adamax') # choose between [SGD+Momentum, Adam, AdamW]
-    parser.add_argument('--momentum', type=float, default=0.9) # vary momentum values
+    parser.add_argument('--momentum', type=float, default=0.9)     # vary momentum values
     
     
     '''
