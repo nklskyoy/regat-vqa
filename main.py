@@ -82,6 +82,12 @@ def parse_args():
     parser.add_argument('--optimizer', type=str, default='Adamax') # choose between [SGD+Momentum, Adam, AdamW]
     parser.add_argument('--momentum', type=float, default=0.9) # vary momentum values
     
+    
+    '''
+    For Weights & Biases logic
+    '''
+    parser.add_argument('--sweeps', action='store_true', help='enable sweeps')
+    
     '''
     For log management and experimenting
     '''

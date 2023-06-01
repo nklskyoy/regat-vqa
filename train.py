@@ -55,18 +55,20 @@ def train(model, train_loader, eval_loader, args, device=torch.device("cuda")):
         logger = utils.Logger(os.path.join(args.output, 'log.txt'))
         wandb_logger = utils.WandbLogger(run=run)
         
-        # run.config.learning_rate = args.base_lr
-        # run.config.epochs = args.epochs 
-        # run.config.optimizer = "torch.optim" + args.optimizer
-        # run.watch(model)
         
         # If using wandb.agent to run a wandb.sweep, the config is initialized 
-        # by the sweep, i.e. the parameters can be re-written from the run.config
+        # by the sweep, i.e. the parameters can be re-written from the run.config        
+        if args.sweeps:
+            args.base_lr = run.config.base_lr
+            args.batch_size = run.config.batch_size
+            args.epochs = run.config.epochs
+            args.optimizer = run.config.optimizer
         
-        args.base_lr = run.config.base_lr
-        args.batch_size = run.config.batch_size
-        args.epochs = run.config.epochs
-        args.optimizer = run.config.optimizer
+        else:
+            run.config.learning_rate = args.base_lr
+            run.config.epochs = args.epochs 
+            run.config.optimizer = "torch.optim" + args.optimizer
+            run.watch(model)
         
         N = len(train_loader.dataset)
         lr_default = args.base_lr
