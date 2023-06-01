@@ -200,9 +200,12 @@ class Logger(object):
 
 
 class WandbLogger():
-    def __init__(self, output_name, reset=False, run=None):
-        #super().__init__(output_name, reset)
-        self.run = run
+    # def __init__(self, output_name, reset=False, run=None):
+        # super().__init__(output_name, reset)
+        # self.run = run
+        
+    def __init__(self, run=None):
+        self.run = run 
 
     def log(self, log_dict,  step, extra_msg=''):
         self.run.log(log_dict, step=step)

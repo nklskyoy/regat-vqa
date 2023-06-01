@@ -26,6 +26,25 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 import wandb
 
+# sweep_configuration = {
+#     'method': 'grid',
+#     'name': 'bs_lr_opt_sweep',
+#     'metric': {
+#         'goal': 'maximize', 
+#         'name': 'eval_score'
+#         },
+#     'parameters': {
+#         'batch_size': {'values': [64, 192]},        # best batch_sizes per 20 epochs
+#         'base_lr': {'values': [3e-4, 7e-4]},        # lower learning rates are better
+#         'optimizer': {'values': ['Adam', 'SGD']},   # potentially better optimizers
+#         'epochs': {'value': 20},                    # keep fixed for now 
+#      }
+# }
+
+# sweep_id = wandb.sweep(sweep=sweep_configuration, 
+#                        project="vqa_regat",
+#                        entity="lect0099")
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -33,12 +52,19 @@ def parse_args():
     For training logistics
     '''
     parser.add_argument('--epochs', type=int, default=20)
+    
+    ''' Learning rate '''
     parser.add_argument('--base_lr', type=float, default=1e-3)
     parser.add_argument('--lr_decay_start', type=int, default=15)
     parser.add_argument('--lr_decay_rate', type=float, default=0.25)
     parser.add_argument('--lr_decay_step', type=int, default=2)
     parser.add_argument('--lr_decay_based_on_val', action='store_true',
                         help='Learning rate decay when val score descreases')
+    
+    # Train according to a customizable list of learning_rates
+    # For now, epoch-wise. Consider settings for step-wise LR. 
+    parser.add_argument('--custom_lr', type=list, default=None)
+    
     parser.add_argument('--grad_accu_steps', type=int, default=1)
     parser.add_argument('--grad_clip', type=float, default=0.25)
     parser.add_argument('--weight_decay', type=float, default=0)
@@ -55,6 +81,12 @@ def parse_args():
     '''
     parser.add_argument('--optimizer', type=str, default='Adamax') # choose between [SGD+Momentum, Adam, AdamW]
     parser.add_argument('--momentum', type=float, default=0.9) # vary momentum values
+    
+    
+    '''
+    For Weights & Biases logic
+    '''
+    parser.add_argument('--sweeps', action='store_true', help='enable sweeps')
     
     '''
     For log management and experimenting

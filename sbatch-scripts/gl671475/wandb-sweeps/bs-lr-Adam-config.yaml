@@ -1,0 +1,27 @@
+program: main.py
+method: grid 
+metric:
+  goal: maximize
+  name: eval_score
+parameters:
+  config:
+    value: "config/ban_vqa.json"
+  relation_type:
+    value: "spatial"
+  batch_size:
+    values: [192]
+  base_lr:
+    values: [0.0003, 0.0007, 0.001, 0.003]
+  optimizer:
+    value: "Adam"
+  epochs:
+    value: 20
+command:
+  - python3 
+  - ${program}
+  - --name
+  - "bs_192_lr_opt_Adam_ep_20"
+  - -- output
+  - "/rwthfs/rz/cluster/hpcwork/lect0099/saved_models/gl671475"
+  - --sweeps 
+  - ${args} 
