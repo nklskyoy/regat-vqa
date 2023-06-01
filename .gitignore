@@ -12,3 +12,7 @@ model/__pycache__
 # Ignoring log and wandb dirs
 sbatch-logs/*
 wandb/*
+batch-scripts/gl671475/*
+batch-scripts/hf201627/*
+batch-scripts/ji111636/*
+batch-scripts/jm351565/*
