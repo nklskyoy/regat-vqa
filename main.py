@@ -26,6 +26,25 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 import wandb
 
+# sweep_configuration = {
+#     'method': 'grid',
+#     'name': 'bs_lr_opt_sweep',
+#     'metric': {
+#         'goal': 'maximize', 
+#         'name': 'eval_score'
+#         },
+#     'parameters': {
+#         'batch_size': {'values': [64, 192]},        # best batch_sizes per 20 epochs
+#         'base_lr': {'values': [3e-4, 7e-4]},        # lower learning rates are better
+#         'optimizer': {'values': ['Adam', 'SGD']},   # potentially better optimizers
+#         'epochs': {'value': 20},                    # keep fixed for now 
+#      }
+# }
+
+# sweep_id = wandb.sweep(sweep=sweep_configuration, 
+#                        project="vqa_regat",
+#                        entity="lect0099")
+
 
 def parse_args():
     parser = argparse.ArgumentParser()

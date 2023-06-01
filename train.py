@@ -21,23 +21,6 @@ import utils
 from tqdm import tqdm
 from model.position_emb import prepare_graph_variables
 
-# sweep_configuration = {
-#     'method': 'grid',
-#     'name': 'bs_lr_sweep',
-#     'metric': {
-#         'goal': 'maximize', 
-#         'name': 'eval_score'
-#         },
-#     'parameters': {
-#         'batch_size': {'values': [128, 192, 256]},
-#         'epochs': {'values': [20]},
-#         'base_lr': {'values': [1e-3, 3e-4, 7e-4]}
-#      }
-# }
-
-# sweep_id = wandb.sweep(sweep=sweep_configuration, 
-#                        project="vqa_regat",
-#                        entity="lect0099")
 
 def instance_bce_with_logits(logits, labels, reduction='mean'):
     assert logits.dim() == 2
@@ -66,22 +49,24 @@ def train(model, train_loader, eval_loader, args, device=torch.device("cuda")):
     with wandb.init(project='vqa_regat', 
                     entity='lect0099', 
                     name=wandb_run_name, 
-                    job_type="train_spatial_ban", 
-                    group='batch_size_and_optimizers') as run:
+                    job_type="sweep-test", 
+                    group='wandb-sweep-test') as run:
         
         logger = utils.Logger(os.path.join(args.output, 'log.txt'))
         wandb_logger = utils.WandbLogger(run=run)
         
-        run.config.learning_rate = args.base_lr
-        run.config.epochs = args.epochs 
-        run.config.optimizer = "torch.optim" + args.optimizer
-        run.watch(model)
-        
-        # args.base_lr = run.config.base_lr
-        # args.batch_size = run.config.batch_size
-        # args.epochs = run.config.epochs
+        # run.config.learning_rate = args.base_lr
+        # run.config.epochs = args.epochs 
         # run.config.optimizer = "torch.optim" + args.optimizer
         # run.watch(model)
+        
+        # If using wandb.agent to run a wandb.sweep, the config is initialized 
+        # by the sweep, i.e. the parameters can be re-written from the run.config
+        
+        args.base_lr = run.config.base_lr
+        args.batch_size = run.config.batch_size
+        args.epochs = run.config.epochs
+        args.optimizer = run.config.optimizer
         
         N = len(train_loader.dataset)
         lr_default = args.base_lr
@@ -120,6 +105,8 @@ def train(model, train_loader, eval_loader, args, device=torch.device("cuda")):
 
         last_eval_score, eval_score = 0, 0
         relation_type = train_loader.dataset.relation_type
+
+        # The whole logic for optimizers and learning rates has to change at some point ...
 
         for epoch in range(0, num_epochs):
             pbar = tqdm(total=len(train_loader))
@@ -286,6 +273,3 @@ def calc_entropy(att):
     eps = 1e-8
     p = att.view(-1, sizes[1], sizes[2] * sizes[3])
     return (-p * (p + eps).log()).sum(2).sum(0)  # g
-
-# # Start sweep job.
-# wandb.agent(sweep_id, function=train, count=4)
