@@ -3,8 +3,8 @@
 ### SBATCH Section
 
 #SBATCH --job-name=VQA-ReGAT
-#SBATCH --output=%j-bs128-lr0.001-output.log
-#SBATCH --error=%j-bs128-lr0.001-error.log
+#SBATCH --output=%j-bs64-lr0.001-output.log
+#SBATCH --error=%j-bs64-lr0.001-error.log
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:volta:2
 #SBATCH --mem-per-gpu=32G
@@ -33,9 +33,9 @@ python3 main.py \
     --config config/ban_vqa.json \
     --relation_type spatial \
     --epochs 20 \
-    --batch_size 128 \
+    --batch_size 64 \
     --base_lr 0.001 \
-    --name "bs_128_lr_0.001_ep_20" \
+    --name "bs_64_lr_0.001_ep_20" \
     --job_id ${SLURM_JOB_ID} \
     --output ${REGAT_SAVE_MODELS_TRAIN_PATH}
 

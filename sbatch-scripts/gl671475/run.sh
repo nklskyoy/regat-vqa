@@ -16,13 +16,24 @@ REGAT_LOCAL_CODE_PATH="/rwthfs/rz/cluster/home/${USERNAME}/vqa_regat/sbatch-scri
 # By default, run.sh operates in code directory
 cd ${REGAT_LOCAL_CODE_PATH}
 
-# Program Section
+###  Program Section
 
-bs_list=(128 192 256)
-lr_list=(0.001 0.005 0.01)
+# DESC: Launched initial experiments for batch_size and learning_rates
+
+# bs_list=(32 64 96 128 192 256)
+# lr_list=(0.00003 0.00007)
+
+# for bs in "${bs_list[@]}"; do
+#   for lr in "${lr_list[@]}"; do
+#     sbatch bs-lr/bs${bs}-lr${lr}-run.sh
+#   done
+# done
+
+bs_list = (64 192)
+opt_list = ("Adam" "SGDM")
 
 for bs in "${bs_list[@]}"; do
-  for lr in "${lr_list[@]}"; do
-    sbatch bs-lr/bs${bs}-lr${lr}-run.sh
-  done
-done
+  for opt in "${opt_list[@]}"; do
+    sbatch bs-opt/bs${bs}-opt-${opt}
+  done 
+done 

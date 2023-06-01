@@ -46,6 +46,7 @@ def evaluate(model, dataloader, model_hps, args, device):
 
     for i, (v, norm_bb, q, target, qid, _, bb,
             spa_adj_matrix, sem_adj_matrix) in enumerate(dataloader):
+        
         batch_size = v.size(0)
         num_objects = v.size(1)
         v = Variable(v).to(device)
@@ -79,7 +80,7 @@ def evaluate(model, dataloader, model_hps, args, device):
         pbar.update(1)
 
     score = score / N
-    results_folder = f"{args.output_folder}/results"
+    results_folder = f"{args.output_folder}/eval"
     if args.save_logits:
         utils.create_dir(results_folder)
         save_to = f"{results_folder}/logits_{args.dataset}" +\
@@ -222,6 +223,6 @@ if __name__ == '__main__':
         num_workers=4, collate_fn=utils.trim_collate)
 
     eval_score = evaluate(
-        model, eval_loader, model_hps, args, device)
+      model, eval_loader, model_hps, args, device)
 
     print('\teval score: %.2f' % (100 * eval_score))

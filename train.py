@@ -21,6 +21,23 @@ import utils
 from tqdm import tqdm
 from model.position_emb import prepare_graph_variables
 
+# sweep_configuration = {
+#     'method': 'grid',
+#     'name': 'bs_lr_sweep',
+#     'metric': {
+#         'goal': 'maximize', 
+#         'name': 'eval_score'
+#         },
+#     'parameters': {
+#         'batch_size': {'values': [128, 192, 256]},
+#         'epochs': {'values': [20]},
+#         'base_lr': {'values': [1e-3, 3e-4, 7e-4]}
+#      }
+# }
+
+# sweep_id = wandb.sweep(sweep=sweep_configuration, 
+#                        project="vqa_regat",
+#                        entity="lect0099")
 
 def instance_bce_with_logits(logits, labels, reduction='mean'):
     assert logits.dim() == 2
@@ -50,7 +67,7 @@ def train(model, train_loader, eval_loader, args, device=torch.device("cuda")):
                     entity='lect0099', 
                     name=wandb_run_name, 
                     job_type="train_spatial_ban", 
-                    group='batch_sizes_and_learning_rates') as run:
+                    group='batch_size_and_optimizers') as run:
         
         logger = utils.Logger(os.path.join(args.output, 'log.txt'))
         wandb_logger = utils.WandbLogger(run=run)
@@ -60,9 +77,20 @@ def train(model, train_loader, eval_loader, args, device=torch.device("cuda")):
         run.config.optimizer = "torch.optim" + args.optimizer
         run.watch(model)
         
+        # args.base_lr = run.config.base_lr
+        # args.batch_size = run.config.batch_size
+        # args.epochs = run.config.epochs
+        # run.config.optimizer = "torch.optim" + args.optimizer
+        # run.watch(model)
+        
         N = len(train_loader.dataset)
         lr_default = args.base_lr
         num_epochs = args.epochs
+        
+        ## TODO: Add learning_rates logic...
+        if args.custom_lr is not None:
+            learning_rates = args.custom_lr
+        
         lr_decay_epochs = range(args.lr_decay_start, num_epochs,
                                 args.lr_decay_step)
         gradual_warmup_steps = [0.5 * lr_default, 1.0 * lr_default,
@@ -258,3 +286,6 @@ def calc_entropy(att):
     eps = 1e-8
     p = att.view(-1, sizes[1], sizes[2] * sizes[3])
     return (-p * (p + eps).log()).sum(2).sum(0)  # g
+
+# # Start sweep job.
+# wandb.agent(sweep_id, function=train, count=4)
