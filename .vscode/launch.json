@@ -1,0 +1,17 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}  --config config/ban_vqa-o.json --relation_type spatial  --epochs 1 --name \"adamax_0.001_wd_0\" --job_id ${SLURM_JOB_ID}",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": ["--config", "config/ban_vqa-o.json"]
+        }
+    ]
+}
