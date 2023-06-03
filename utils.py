@@ -8,9 +8,11 @@ MIT License
 """
 from __future__ import print_function
 
-import errno
+
 import os
 import re
+import math 
+import errno
 import collections
 import numpy as np
 import operator
@@ -19,10 +21,9 @@ from PIL import Image
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-# from torch._six import string_classes
-string_classes = str
+import torch.optim.lr_scheduler as lr_scheduler 
 from torch.utils.data.dataloader import default_collate
-
+string_classes = str
 
 EPS = 1e-7
 
@@ -210,8 +211,53 @@ class WandbLogger():
     def log(self, log_dict,  step, extra_msg=''):
         self.run.log(log_dict, step=step)
         #super().log(extra_msg=extra_msg)
-
-
+        
+        
+class WarmupConstantExpDecayLR(object):
+    ''' Custom implementation of an LR scheduler:
+    1) Gradual linear warmup from init_lr to peak_lr,
+    2) Keeping peak_lr constant, 
+    3) Exponential decay from peak_lr to final_lr;
+    
+    Args:
+        optimizer (torch.optim.Optimizer): 
+        init_lr (float): initial learning rate to start warmup
+        peak_lr (float): final learning rate to end warmup, lr for constant phase
+        final_lr (float): exponential decrease from peak_lr to final_lr
+        begin_constant (int): epoch to begin constant phase 2)
+        begin_decay (int): epoch to begin decay phase 3)   
+        epochs (int): total number of training epochs    
+    '''
+    
+    def __init__(self, optimizer, init_lr, peak_lr, final_lr, begin_constant, begin_decay, epochs): 
+        self.optimizer = optimizer       
+        self.init_lr = init_lr
+        self.peak_lr = peak_lr
+        self.final_lr = final_lr
+        self.begin_constant = begin_constant
+        self.begin_decay = begin_decay
+        self.num_epochs = epochs
+        self.last_epoch = -1   
+                  
+    def get_lr(self):
+        current_epoch = self.last_epoch + 1
+        decay_epochs = self.num_epochs - self.begin_decay
+        decay_factor = (self.final_lr / self.peak_lr) ** (1.0 / decay_epochs)
+        if current_epoch < self.begin_constant:
+            lr = self.init_lr + (self.peak_lr - self.init_lr) * current_epoch / self.begin_constant
+        elif current_epoch < self.begin_decay:
+            lr = self.peak_lr
+        else:
+            lr = self.peak_lr * (decay_factor ** (current_epoch - self.begin_decay))         
+        return [lr] * len(self.optimizer.param_groups)  
+     
+    def step(self):
+        self.last_epoch += 1
+        for param_group, lr in zip(self.optimizer.param_groups, self.get_lr()):
+            param_group['lr'] = lr      
+            
+    def get_last_lr(self):
+        return self.get_lr()
 
 def create_glove_embedding_init(idx2word, glove_file):
     word2emb = {}

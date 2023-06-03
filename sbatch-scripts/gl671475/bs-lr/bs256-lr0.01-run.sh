@@ -8,7 +8,8 @@
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:volta:2
 #SBATCH --mem-per-gpu=32G
-#SBATCH --time=08:00:00
+#SBATCH --time=02:00:00
+#SBATCH --account=lect0099
 
 module load CUDA/11.8.0
 source /rwthfs/rz/cluster/home/gl671475/miniconda3/bin/activate
@@ -21,7 +22,7 @@ USERNAME=$(whoami)
 
 REGAT_LOCAL_CODE_PATH="/rwthfs/rz/cluster/home/${USERNAME}/vqa_regat"
 REGAT_DATA_AND_MODELS_PATH="/rwthfs/rz/cluster/hpcwork/lect0099" 
-REGAT_SAVE_MODELS_TRAIN_PATH="${REGAT_DATA_AND_MODELS_PATH}/saved_models/${USERNAME}/train"
+REGAT_SAVE_MODELS_TRAIN_PATH="${REGAT_DATA_AND_MODELS_PATH}/saved_models/${USERNAME}"
 
 # By default, run.sh operates in code directory
 cd ${REGAT_LOCAL_CODE_PATH}
@@ -32,7 +33,7 @@ cd ${REGAT_LOCAL_CODE_PATH}
 python3 main.py \
     --config config/ban_vqa.json \
     --relation_type spatial \
-    --epochs 20 \
+    --epochs 3 \
     --batch_size 256 \
     --base_lr 0.01 \
     --name "bs_256_lr_0.01_ep_20" \
