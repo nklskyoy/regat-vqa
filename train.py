@@ -48,6 +48,7 @@ def train(model, train_loader, eval_loader, args, device=torch.device("cuda")):
     wandb_run_name = re.sub(r'^[0-9]{8}_', '', wandb_run_name)
     step = 0
 
+    # This is very verbose, consider fixing 
     if args.wandb:
         run = wandb.init(project="vqa_regat",
                          entity='lect0099', 
@@ -55,7 +56,20 @@ def train(model, train_loader, eval_loader, args, device=torch.device("cuda")):
                          group=args.wandb_group)
         
         if args.wandb == "run":
-            run.config.learning_rate = args.base_lr
+            if args.lr_scheduler == "default":
+                run.config.base_lr = args.base_lr
+            else:
+                run.config.init_lr = args.init_lr
+                run.config.peak_lr = args.peak_lr
+                run.config.final_lr = args.final_lr 
+                
+                if args.lr_scheduler == "custom":
+                    run.config.begin_constant = args.begin_constant
+                    run.config.begin_decay = args.begin_decay
+                else:
+                    run.config.increase_frac = args.increase_frac
+                    run.config.strategy = args.strategy 
+                    
             run.config.epochs = args.epochs 
             run.config.optimizer = "torch.optim" + args.optimizer
             run.watch(model)
@@ -63,7 +77,20 @@ def train(model, train_loader, eval_loader, args, device=torch.device("cuda")):
         # If using wandb.agent to run a wandb.sweep, the config is initialized 
         # by the sweep, i.e. the parameters can be re-written from the run.config       
         elif args.wandb == "sweep":
-            args.base_lr = run.config.base_lr
+            if args.lr_scheduler == "default":
+                args.base_lr = run.config.base_lr
+            else:
+                args.init_lr = run.config.init_lr 
+                args.peak_lr = run.config.peak_lr
+                args.final_lr = run.config.final_lr
+                
+                if args.lr_scheduler == "custom":
+                    args.begin_constant = run.config.begin_constant
+                    args.begin_decay = run.config.begin_decay
+                else:
+                    args.increase_frac = run.config.increase_frac
+                    args.strategy = run.config.strategy
+                    
             args.batch_size = run.config.batch_size
             args.epochs = run.config.epochs
             args.optimizer = run.config.optimizer
@@ -77,11 +104,7 @@ def train(model, train_loader, eval_loader, args, device=torch.device("cuda")):
     
     N = len(train_loader.dataset)
     num_epochs = args.epochs
-    base_lr = args.base_lr 
-    
-    momentum = args.momentum 
-    weight_decay = args.weight_decay
-    
+    start_lr = args.base_lr if args.lr_scheduler == "default" else args.init_lr 
         
     logger.write("------------ SETTINGS ------------")
     
@@ -89,8 +112,8 @@ def train(model, train_loader, eval_loader, args, device=torch.device("cuda")):
     if args.optimizer == 'SGD':
         ## Needs a lot of finetuning, probably investigate later...
         optim = torch.optim.SGD(filter(lambda p: p.requires_grad, model.parameters()),
-                                lr=base_lr, momentum=momentum, weight_decay=weight_decay)
-        logger.write(f"Optimizer: {args.optimizer} with momentum={momentum}")
+                                lr=start_lr, momentum=args.momentum, weight_decay=args.weight_decay)
+        logger.write(f"Optimizer: {args.optimizer} with momentum={args.momentum}")
     else:
         ## NOTE: Adam + weight_decay is not the same as AdamW, refer to: 
         ## https://stackoverflow.com/questions/64621585/adamw-and-adam-with-weight-decay
@@ -101,17 +124,17 @@ def train(model, train_loader, eval_loader, args, device=torch.device("cuda")):
         # Adam can be used without weight_decay
         if args.optimizer == 'Adam':
             optim = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()),
-                                    lr=base_lr, weight_decay=weight_decay) 
+                                    lr=start_lr, weight_decay=args.weight_decay) 
              
         # AdamW is supposed to be used with weight_decay (!), i.e. default = 1e-2
         elif args.optimizer == 'AdamW':
             optim = torch.optim.AdamW(filter(lambda p: p.requires_grad, model.parameters()),
-                                      lr=base_lr, weight_decay=weight_decay)
+                                      lr=start_lr, weight_decay=args.weight_decay)
             
         # Default Adamax from ReGAT paper
         elif args.optimizer == "Adamax":
             optim = torch.optim.Adamax(filter(lambda p: p.requires_grad, model.parameters()),
-                                    lr=base_lr, weight_decay=weight_decay)
+                                    lr=start_lr, weight_decay=args.weight_decay)
             
         else:
             raise ValueError("Chosen optimizer is not available!")  
@@ -129,7 +152,7 @@ def train(model, train_loader, eval_loader, args, device=torch.device("cuda")):
         scheduler = lr_scheduler.LambdaLR(optim, lr_lambda=lambda epoch: default_lr_schedule[epoch])
         
         lr_epoch_update = True # Differentiate between epoch-based and step-based LR updates
-        logger.write(f"Default LR scheduler with base_lr={base_lr:.6f}")
+        logger.write(f"Default LR scheduler with base_lr={start_lr:.6f}")
     else:
         init_lr, peak_lr, final_lr = args.init_lr, args.peak_lr, args.final_lr
         
@@ -182,7 +205,8 @@ def train(model, train_loader, eval_loader, args, device=torch.device("cuda")):
         t = time.time()
         
         # Print out the learning rate for epoch, index by param_group
-        logger.write(f"learning rate: {scheduler.get_last_lr()[-1]:.6f}")
+        if lr_epoch_update:
+            logger.write(f"learning rate: {scheduler.get_last_lr()[-1]:.6f}")
         
         mini_batch_count = 0
         batch_multiplier = args.grad_accu_steps
