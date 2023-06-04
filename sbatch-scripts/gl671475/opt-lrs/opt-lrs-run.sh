@@ -6,7 +6,8 @@
 #SBATCH --output=%j-output.log
 #SBATCH --error=%j-error.log
 #SBATCH --nodes=1
-#SBATCH --time=15:00
+#SBATCH --time=10:00
+#SBATCH --account=lect0099
 
 # Extracts the TID of the user
 USERNAME=$(whoami)
@@ -17,20 +18,7 @@ REGAT_LOCAL_CODE_PATH="/rwthfs/rz/cluster/home/${USERNAME}/vqa_regat/sbatch-scri
 cd ${REGAT_LOCAL_CODE_PATH}
 
 ###  Program Section
-
-sbatch opt-lrs/...
-
-for bs in "${bs_list[@]}"; do
-  for lr in "${lr_list[@]}"; do
-    sbatch bs-lr/bs${bs}-lr${lr}-run.sh
-  done
-done
-
-# bs_list = (64 192)
-# opt_list = ("Adam" "SGDM")
-
-# for bs in "${bs_list[@]}"; do
-#  for opt in "${opt_list[@]}"; do
-#    sbatch bs-opt/bs${bs}-opt-${opt}
-#  done 
-# done 
+sbatch opt-lrs/bs64-opt-Adam-schedule-custom-1e-4_2e-3_5e-5-epochs-5_15_20-run.sh
+sbatch opt-lrs/bs64-opt-Adam-schedule-OCLR-1e-4_2e-3_5e-5-run.sh
+sbatch opt-lrs/bs64-opt-AdamW-wd-1e-2-schedule-custom-1e-4_2e-3_5e-5-epochs-5_15_20-run.sh
+sbatch opt-lrs/bs64-opt-AdamW-wd-1e-2-schedule-OCLR-1e-4_2e-3_5e-5-run.sh
