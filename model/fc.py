@@ -7,45 +7,14 @@ https://github.com/jnhwkim/ban-vqa
 MIT License
 """
 from __future__ import print_function
+import torch
 import torch.nn as nn
 from torch.nn.utils.weight_norm import weight_norm
-import torch
 
-
-# class FCNet(nn.Module):
-#     """Simple class for non-linear fully connect network
-#     """
-#     def __init__(self, dims, act='ReLU', dropout=0, bias=True):
-#         super(FCNet, self).__init__()
-
-#         layers = []
-#         for i in range(len(dims)-2):
-#             in_dim = dims[i]
-#             out_dim = dims[i+1]
-#             if 0 < dropout:
-#                 layers.append(nn.Dropout(dropout))
-#             layers.append(weight_norm(nn.Linear(in_dim, out_dim, bias=bias),
-#                                       dim=None))
-#             if '' != act and act is not None:
-#                 activation = getattr(nn, act)()
-#                 layers.append(activation)
-#                 # layers.append(getattr(nn, act)())
-#         if 0 < dropout:
-#             layers.append(nn.Dropout(dropout))
-#         layers.append(weight_norm(nn.Linear(dims[-2], dims[-1], bias=bias),
-#                                   dim=None))
-#         if '' != act and act is not None:
-#             activation = getattr(nn, act)()
-#             layers.append(activation)
-#             # layers.append(getattr(nn, act)())
-
-#         self.main = nn.Sequential(*layers)
-
-#     def forward(self, x):
-#         return self.main(x)
 
 class FCNet(nn.Module):
-    """Simple class for non-linear fully connect network
+    """
+    Simple class for non-linear fully connect network
     """
     def __init__(self, dims, act='ReLU', dropout=0, bias=True):
         super(FCNet, self).__init__()
@@ -54,22 +23,20 @@ class FCNet(nn.Module):
         for i in range(len(dims)-2):
             in_dim = dims[i]
             out_dim = dims[i+1]
-            if 0 < dropout:
+            if dropout > 0:
                 layers.append(nn.Dropout(dropout))
             linear_layer = nn.Linear(in_dim, out_dim, bias=bias)
             layers.append(weight_norm(linear_layer, dim=None))
-            if '' != act and act is not None:
+            if act is not None and act != '':
                 activation = getattr(nn, act)()
                 layers.append(activation)
-                # layers.append(getattr(nn, act)())
-        if 0 < dropout:
+        if dropout > 0:
             layers.append(nn.Dropout(dropout))
         linear_layer = nn.Linear(dims[-2], dims[-1], bias=bias)
         layers.append(weight_norm(linear_layer, dim=None))
-        if '' != act and act is not None:
+        if act is not None and act != '':
             activation = getattr(nn, act)()
             layers.append(activation)
-            # layers.append(getattr(nn, act)())
 
         self.main = nn.Sequential(*layers)
 
