@@ -21,11 +21,9 @@ from train import train
 import utils
 from utils import trim_collate
 
+import wandb
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning) 
-
-import wandb
-
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -33,28 +31,57 @@ def parse_args():
     For training logistics
     '''
     parser.add_argument('--epochs', type=int, default=20)
-    parser.add_argument('--base_lr', type=float, default=1e-3)
-    parser.add_argument('--lr_decay_start', type=int, default=15)
-    parser.add_argument('--lr_decay_rate', type=float, default=0.25)
-    parser.add_argument('--lr_decay_step', type=int, default=2)
-    parser.add_argument('--lr_decay_based_on_val', action='store_true',
-                        help='Learning rate decay when val score descreases')
+    
+    ''' Learning rate '''
+    # parser.add_argument('--lr_decay_start', type=int, default=15)
+    # parser.add_argument('--lr_decay_rate', type=float, default=0.25)
+    # parser.add_argument('--lr_decay_step', type=int, default=2)
+    # parser.add_argument('--lr_decay_based_on_val', action='store_true',
+    #                     help='Learning rate decay when val score descreases')
+    
+    # Train according to some LR scheduler
+    parser.add_argument('--lr_scheduler', type=str, default='default')
+    
+    # For the default strategy, the following params apply
+    parser.add_argument('--base_lr', type=float, default=1e-3)     
+    
+    # For the OCLR strategy, the following params apply        
+    parser.add_argument('--peak_lr', type=float, default=2e-3)      # + WCED
+    parser.add_argument('--init_lr', type=float, default=5e-4)      # + WCED
+    parser.add_argument('--final_lr', type=float, default=5e-5)     # + WCED
+    parser.add_argument('--increase_frac', type=float, default=0.4)
+    parser.add_argument('--strategy', type=str, default='cos')
+    
+    # For the WarmupConstantExpDecay LR strategy, the following params 
+    parser.add_argument('--begin_constant', type=int, default=5)
+    parser.add_argument('--begin_decay', type=int, default=15)
+    
     parser.add_argument('--grad_accu_steps', type=int, default=1)
     parser.add_argument('--grad_clip', type=float, default=0.25)
     parser.add_argument('--weight_decay', type=float, default=0)
-    parser.add_argument('--batch_size', type=int, default=64)
+    parser.add_argument('--batch_size', type=int, default=128)
     parser.add_argument('--output', type=str, default='saved_models/')
     parser.add_argument('--save_optim', action='store_true',
                         help='save optimizer')
     parser.add_argument('--log_interval', type=int, default=-1,
                         help='Print log for certain steps')
-    parser.add_argument('--seed', type=int, default=-1, help='random seed')
+    parser.add_argument('--seed', type=int, default=42, 
+                        help='random seed')                                 # fixed seed to 42 instead of -1
     
     '''
-    For fine-tuning (Optimizer settings, LR schedules, Batch-Norm and/or Layer-Norm)
+    For fine-tuning (Optimizer settings, LR schedules, Batch/Layer-Norm)
     '''
-    parser.add_argument('--optimizer', type=str, default='Adamax') # choose between [SGD+Momentum, Adam, AdamW]
-    parser.add_argument('--momentum', type=float, default=0.9) # vary momentum values
+    parser.add_argument('--optimizer', type=str, default='Adamax')          # choose between [SGD+Momentum, Adam, AdamW]
+    parser.add_argument('--momentum', type=float, default=0.9)              # vary momentum values
+    
+    
+    '''
+    For Weights & Biases logic
+    '''
+    # wandb
+    parser.add_argument('--wandb_api_key',type=str)                         # to be removed, WANDB_API_KEY is hardcoded into run.sh 
+    parser.add_argument('--wandb', type=str, default=None)
+    parser.add_argument('--wandb_group', type=str, default="test")
     
     '''
     For log management and experimenting
@@ -131,9 +158,6 @@ def parse_args():
     # can use config files
     parser.add_argument('--config', help='JSON config files')
 
-    # wandb
-    parser.add_argument('--wandb_api_key',type=str)
-
     args = parse_with_config(parser)
     return args
 
@@ -141,73 +165,71 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
     if not torch.cuda.is_available():
-        raise ValueError("CUDA is not available," +
-                         "this code currently only support GPU.")
+        raise ValueError("CUDA is not available")
     n_device = torch.cuda.device_count()
-    print("Found %d GPU cards for training" % (n_device))
+    print(f"Found {n_device} GPU cards for training")
     device = torch.device("cuda")
     batch_size = args.batch_size * n_device
 
-    torch.backends.cudnn.benchmark = True
-
-    if args.seed != -1:
-        print("Predefined random seed %d" % args.seed)
-    else:
-        # fix seed
-        args.seed = random.randint(1, 10000)
-        print("Choose random seed %d" % args.seed)
+    torch.backends.cudnn.benchmark = True    
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed_all(args.seed)
+    
+    fusion_methods = args.fusion
+    if args.fusion == "ban":
+        fusion_methods += "_" + str(args.ban_gamma)
 
-    if "ban" == args.fusion:
-        fusion_methods = args.fusion+"_"+str(args.ban_gamma)
-    else:
-        fusion_methods = args.fusion
-
-    dictionary = Dictionary.load_from_file(
-                    join(args.data_folder, 'glove/dictionary.pkl'))
+    dictionary = Dictionary.load_from_file(join(args.data_folder, 'glove/dictionary.pkl'))
     if args.dataset == "vqa_cp":
-        coco_train_features = Image_Feature_Loader(
-                            'train', args.relation_type,
-                            adaptive=args.adaptive, dataroot=args.data_folder)
-        coco_val_features = Image_Feature_Loader(
-                            'val', args.relation_type,
-                            adaptive=args.adaptive, dataroot=args.data_folder)
-        val_dset = VQA_cp_Dataset(
-                    'test', dictionary, coco_train_features, coco_val_features,
-                    adaptive=args.adaptive, pos_emb_dim=args.imp_pos_emb_dim,
-                    dataroot=args.data_folder)
-        train_dset = VQA_cp_Dataset(
-                    'train', dictionary, coco_train_features,
-                    coco_val_features, adaptive=args.adaptive,
-                    pos_emb_dim=args.imp_pos_emb_dim,
-                    dataroot=args.data_folder)
+        coco_train_features = Image_Feature_Loader('train', 
+                                                   args.relation_type,
+                                                   adaptive=args.adaptive, 
+                                                   dataroot=args.data_folder)
+        coco_val_features = Image_Feature_Loader('val', 
+                                                 args.relation_type,
+                                                 adaptive=args.adaptive, 
+                                                 dataroot=args.data_folder)
+        train_dset = VQA_cp_Dataset('train', 
+                            dictionary, 
+                            coco_train_features,
+                            coco_val_features, 
+                            adaptive=args.adaptive,
+                            pos_emb_dim=args.imp_pos_emb_dim,
+                            dataroot=args.data_folder)
+        val_dset = VQA_cp_Dataset('test', 
+                                  dictionary, 
+                                  coco_train_features, 
+                                  coco_val_features,
+                                  adaptive=args.adaptive, pos_emb_dim=args.imp_pos_emb_dim,
+                                  dataroot=args.data_folder)
     else:
-        val_dset = VQAFeatureDataset(
-                'val', dictionary, args.relation_type, adaptive=args.adaptive,
-                pos_emb_dim=args.imp_pos_emb_dim, dataroot=args.data_folder)
-        train_dset = VQAFeatureDataset(
-                'train', dictionary, args.relation_type,
-                adaptive=args.adaptive, pos_emb_dim=args.imp_pos_emb_dim,
-                dataroot=args.data_folder)
+        train_dset = VQAFeatureDataset('train', 
+                                       dictionary, 
+                                       args.relation_type,
+                                       adaptive=args.adaptive, 
+                                       pos_emb_dim=args.imp_pos_emb_dim,
+                                       dataroot=args.data_folder)
+        val_dset = VQAFeatureDataset('val', 
+                                     dictionary, 
+                                     args.relation_type, 
+                                     adaptive=args.adaptive,
+                                     pos_emb_dim=args.imp_pos_emb_dim, 
+                                     dataroot=args.data_folder)
 
     model = build_regat(val_dset, args).to(device)
-
-    kwargs = { 'dataroot' : args.data_folder } 
+    kwargs = { 'dataroot' : args.data_folder } # fix this
 
     tfidf = None
     weights = None
     if args.tfidf:
-        tfidf, weights = tfidf_from_questions(['train', 'val', 'test2015'],
+        tfidf, weights = tfidf_from_questions(['train', 'val', 'test2015'], 
                                               dictionary, **kwargs)
-    model.w_emb.init_embedding(join(args.data_folder,
-                                    'glove/glove6b_init_300d.npy'),
-                               tfidf, weights)
+    model.w_emb.init_embedding(join(args.data_folder,'glove/glove6b_init_300d.npy'), tfidf, weights)
 
     model = nn.DataParallel(model).to(device)
 
     if args.checkpoint != "":
-        print("Loading weights from %s" % (args.checkpoint))
+        print(f"Loading weights from {args.checkpoint}")
         if not os.path.exists(args.checkpoint):
             raise ValueError("No such checkpoint exists!")
         checkpoint = torch.load(args.checkpoint)
@@ -275,7 +297,7 @@ if __name__ == '__main__':
         eval_loader = DataLoader(val_dset, batch_size, shuffle=False,
                                  num_workers=4, collate_fn=trim_collate)
     
-    exp_name_list = [fusion_methods, args.relation_type, args.dataset, str(args.seed), args.name]
+    exp_name_list = [fusion_methods, args.relation_type, args.dataset, args.name]
     if args.job_id > 0: 
         exp_name_list = [str(args.job_id)] + exp_name_list
     
@@ -283,8 +305,7 @@ if __name__ == '__main__':
     args.output = join(args.output, exp_name)
     
     if exists(args.output) and os.listdir(args.output):
-        raise ValueError("Output directory ({}) already exists and is not "
-                         "empty.".format(args.output))
+        raise ValueError(f"Output directory ({args.output}) already exists and is not empty.".format(args.output))
     utils.create_dir(args.output)
     
     with open(join(args.output, 'hps.json'), 'w') as writer:
