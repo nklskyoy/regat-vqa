@@ -13,3 +13,6 @@ model/__pycache__
 sbatch-logs/*
 wandb/*
 sbatch-scripts/*/wandb/  
+
+# Ignoring RWTH HPC login files
+core.*.hpc.itc.rwth-aachen.de*
