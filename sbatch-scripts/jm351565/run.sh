@@ -11,10 +11,10 @@
 #SBATCH --time=01:00:00
 
 module load CUDA/11.8.0
-source /rwthfs/rz/cluster/home/gl671475/miniconda3/bin/activate
-conda activate regat_common
+source /rwthfs/rz/cluster/home/jm351565/anaconda3/bin/activate 
+conda activate vqa2
 
-export WANDB_API_KEY=32abfb91875c02ffd9d1f8d294baad4f5eabbdf7
+export WANDB_API_KEY=b1334c638c1d540622bd6cf5835b65eec213bb03
 
 # Extracts the TID of the user
 USERNAME=$(whoami)

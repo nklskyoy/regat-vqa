@@ -1,23 +1,22 @@
-# %%
-%matplotlib inline
-from dataset import Dictionary, VQAFeatureDataset, VisualGenomeFeatureDataset
+
+from  dataset import Dictionary, VQAFeatureDataset, VisualGenomeFeatureDataset
 import matplotlib.pyplot as plt; plt.ioff()
 import numpy as np
 from PIL import Image
 from os.path import join, exists
 import matplotlib.patches as patches
 
-# %%
+
 vqa_data_folder = '/hpcwork/lect0099/data'
 coco_data_folder = '/work/lect0099/coco-2014/train2014/train2014'
 coco_img_prefix = 'COCO_train2014'
 coco_img_idx_len = 12 
-# %%
+
 adaptive = True
 imp_pos_emb_dim = 64
 relation_type = "implicit"
 
-# %%
+
 dictionary = Dictionary.load_from_file(
                 join(vqa_data_folder, 'glove/dictionary.pkl'))
 
@@ -25,7 +24,7 @@ train_dset = VQAFeatureDataset(
         'train', dictionary, relation_type,
         adaptive=adaptive, pos_emb_dim=imp_pos_emb_dim,
         dataroot=vqa_data_folder)
-# %%
+
 
 def plot_with_bb(idx, axs):
     # https://stackoverflow.com/questions/37435369/matplotlib-how-to-draw-a-rectangle-on-image
@@ -47,11 +46,11 @@ def plot_with_bb(idx, axs):
 
 
 
-# %%
+
 
 id = 73
 
 fig, ax = plt.subplots()
 plot_with_bb(id, ax)
 plt.show()
-# %%
+
