@@ -231,6 +231,92 @@ def _find_coco_id(vgv, vgv_id):
             return v['coco_id']
     return None
 
+class VQAEvalDataset(Dataset):
+    def __init__(self, name, dictionary, dataroot='data', adaptive=True):
+        super(VQAEvalDataset, self).__init__()
+        assert name in ['val', 'test-dev2015', 'test2015']
+
+        ans2label_path = os.path.join(dataroot, 'cache', 'trainval_ans2label.pkl')
+        label2ans_path = os.path.join(dataroot, 'cache', 'trainval_label2ans.pkl')
+        self.ans2label = pickle.load(open(ans2label_path, 'rb'))
+        self.label2ans = pickle.load(open(label2ans_path, 'rb'))
+        self.num_ans_candidates = len(self.ans2label)
+        self.adaptive = adaptive 
+        self.dictionary = dictionary
+
+        prefix = '_36' if 'test' in name else '36'  
+        imgid_dataroot = dataroot+"/imgids"
+
+        self.img_id2idx = pickle.load(
+            open(os.path.join(imgid_dataroot, '%s%s_imgid2idx.pkl' %
+                              (name, '' if self.adaptive else prefix)), 'rb'))
+
+        self.entries = _load_dataset(dataroot, name, self.img_id2idx,
+                                     self.label2ans)
+        self.tokenize()
+        self.tensorize()
+        
+
+    def tokenize(self, max_length=14):
+        """Tokenizes the questions.
+
+        This will add q_token in each entry of the dataset.
+        -1 represent nil, and should be treated as padding_idx in embedding
+        """
+        for entry in self.entries:
+            tokens = self.dictionary.tokenize(entry['question'], False)
+            tokens = tokens[:max_length]
+            if len(tokens) < max_length:
+                # Note here we pad to the back of the sentence
+                padding = [self.dictionary.padding_idx] * \
+                          (max_length - len(tokens))
+                tokens = tokens + padding
+            utils.assert_eq(len(tokens), max_length)
+            entry['q_token'] = tokens
+
+    def tensorize(self):
+        for entry in self.entries:
+            question = torch.from_numpy(np.array(entry['q_token']))
+            entry['q_token'] = question
+
+            answer = entry['answer']
+            if answer is not None:
+                labels = np.array(answer['labels'])
+                scores = np.array(answer['scores'], dtype=np.float32)
+                if len(labels):
+                    labels = torch.from_numpy(labels)
+                    scores = torch.from_numpy(scores)
+                    entry['answer']['labels'] = labels
+                    entry['answer']['scores'] = scores
+                else:
+                    entry['answer']['labels'] = None
+                    entry['answer']['scores'] = None
+
+    def __getitem__(self, index):
+        entry = self.entries[index]
+        raw_question = entry["question"]
+        image_id = entry["image_id"]
+
+        question = entry['q_token']
+        question_id = entry['question_id']
+
+        answer = entry['answer']
+        if answer is not None:
+            labels = answer['labels']
+            scores = answer['scores']
+            target = torch.zeros(self.num_ans_candidates)
+            if labels is not None:
+                target.scatter_(0, labels, scores)
+            return question, target, question_id, image_id
+
+        else:
+            print('PASS')
+            return question, question_id, question_id, image_id
+        
+
+    def __len__(self):
+        return len(self.entries)
+
 
 class VQAFeatureDataset(Dataset):
     def __init__(self, name, dictionary, relation_type, dataroot='data',
