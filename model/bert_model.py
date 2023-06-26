@@ -185,3 +185,20 @@ print('Token IDs:', input_ques_ids[0])
 print('Attention masks: ', attention_masks[0])
 
 print("time for encoding: ", time.time() - start_time_2)
+
+from transformers import BertModel, AdamW, BertConfig
+
+# Load BertForSequenceClassification, the pretrained BERT model with a single 
+# linear classification layer on top. 
+model = BertModel.from_pretrained(
+    "bert-base-uncased", # Use the 12-layer BERT model, with an uncased vocab.
+    num_labels = 2, # The number of output labels--2 for binary classification.
+                    # You can increase this for multi-class tasks.   
+    output_attentions = True, # Whether the model returns attentions weights.
+    output_hidden_states = True, # Whether the model returns all hidden-states.
+)
+
+# Tell pytorch to run this model on the GPU.
+model.cuda()
+
+print()
