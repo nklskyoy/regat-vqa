@@ -31,9 +31,9 @@ REGAT_SAVE_MODELS_EVAL_PATH="${REGAT_DATA_AND_MODELS_PATH}/saved_models/${USERNA
 ### Program Section
 
 # (Uncomment for training)
-python3 main.py --config config/ban_vqa-o.json --relation_type spatial  --epochs 1 --name "adamax_0.001_wd_0" --job_id ${SLURM_JOB_ID} --output ${REGAT_SAVE_MODELS_TRAIN_PATH}
+python3 fat.py --config config/ban_vqa-o.json  --epochs 20 --name "fat_adamax_0.001_wd_0" --job_id ${SLURM_JOB_ID} --output ${REGAT_SAVE_MODELS_TRAIN_PATH}
 REGAT_SAVE_EXPERIMENT_TRAIN_PATH=$(find ${REGAT_SAVE_MODELS_TRAIN_PATH} -type d -name "${SLURM_JOB_ID}*" -print -quit)  
-mv "./sbatch-scripts/${SLURM_JOB_ID}-"*".log" ${REGAT_SAVE_EXPERIMENT_TRAIN_PATH}
+#mv "./sbatch-scripts/${SLURM_JOB_ID}-"*".log" ${REGAT_SAVE_EXPERIMENT_TRAIN_PATH}
 
 # (Uncomment for evaluation)
 # python3 eval.py --data_folder ${REGAT_DATA_AND_MODELS_PATH}/data --output_folder ${REGAT_DATA_AND_MODELS_PATH}/pretrained_models/regat_spatial/ban_1_spatial_vqa_1687
