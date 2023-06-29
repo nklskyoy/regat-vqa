@@ -197,21 +197,21 @@ def prepare_graph_variables(relation_type, bb, sem_adj_matrix, spa_adj_matrix,
                             sem_label_num, device):
 
     pos_emb_var, sem_adj_matrix_var, spa_adj_matrix_var = None, None, None
-    if relation_type == "spatial":
+    if relation_type == "spatial" or relation_type is None:
         assert spa_adj_matrix.dim() > 2, "Found spa_adj_matrix of wrong shape"
         spa_adj_matrix = spa_adj_matrix.to(device)
         spa_adj_matrix = spa_adj_matrix[:, :num_objects, :num_objects]
         spa_adj_matrix = torch_broadcast_adj_matrix(
                         spa_adj_matrix, label_num=spa_label_num, device=device)
         spa_adj_matrix_var = Variable(spa_adj_matrix).to(device)
-    if relation_type == "semantic":
+    if relation_type == "semantic" or relation_type is None:
         assert sem_adj_matrix.dim() > 2, "Found sem_adj_matrix of wrong shape"
         sem_adj_matrix = sem_adj_matrix.to(device)
         sem_adj_matrix = sem_adj_matrix[:, :num_objects, :num_objects]
         sem_adj_matrix = torch_broadcast_adj_matrix(
                         sem_adj_matrix, label_num=sem_label_num, device=device)
         sem_adj_matrix_var = Variable(sem_adj_matrix).to(device)
-    else:
+    if relation_type is None or (not relation_type == "spatial"  and not relation_type == "semantic"):
         bb = bb.to(device)
         pos_mat = torch_extract_position_matrix(bb, nongt_dim=nongt_dim)
         pos_emb = torch_extract_position_embedding(

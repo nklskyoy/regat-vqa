@@ -320,7 +320,7 @@ class VQAEvalDataset(Dataset):
 
 
 class VQAFeatureDataset(Dataset):
-    def __init__(self, name, dictionary, relation_type, dataroot='data',
+    def __init__(self, name, dictionary, dataroot='data',
                  adaptive=False, pos_emb_dim=64, nongt_dim=36):
         super(VQAFeatureDataset, self).__init__()
         assert name in ['train', 'val', 'test-dev2015', 'test2015']
@@ -333,8 +333,8 @@ class VQAFeatureDataset(Dataset):
         self.label2ans = pickle.load(open(label2ans_path, 'rb'))
         self.num_ans_candidates = len(self.ans2label)
         self.dictionary = dictionary
-        self.relation_type = relation_type
         self.adaptive = adaptive
+        self.relation_type = None
         prefix = '36'
         if 'test' in name:
             prefix = '_36'
@@ -355,23 +355,15 @@ class VQAFeatureDataset(Dataset):
             self.features = np.array(hf.get('image_features'))
             self.normalized_bb = np.array(hf.get('spatial_features'))
             self.bb = np.array(hf.get('image_bb'))
-            if "semantic_adj_matrix" in hf.keys() \
-               and self.relation_type == "semantic":
+            if "semantic_adj_matrix" in hf.keys() :
                 self.semantic_adj_matrix = np.array(
                                         hf.get('semantic_adj_matrix'))
-                print("Loaded semantic adj matrix from file...",
+                print("Loaded sem adj matrix from file...",
                       self.semantic_adj_matrix.shape)
-            else:
-                self.semantic_adj_matrix = None
-                print("Setting semantic adj matrix to None...")
-            if "image_adj_matrix" in hf.keys()\
-               and self.relation_type == "spatial":
+            if "image_adj_matrix" in hf.keys():
                 self.spatial_adj_matrix = np.array(hf.get('image_adj_matrix'))
                 print("Loaded spatial adj matrix from file...",
                       self.spatial_adj_matrix.shape)
-            else:
-                self.spatial_adj_matrix = None
-                print("Setting spatial adj matrix to None...")
 
             self.pos_boxes = None
             if self.adaptive:

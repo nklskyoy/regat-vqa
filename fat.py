@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader, ConcatDataset, random_split
 import random
 import json
 
-from dataset import Dictionary, VQAFeatureDataset, VisualGenomeFeatureDataset
+from dataset_fat import Dictionary, VQAFeatureDataset, VisualGenomeFeatureDataset
 from dataset import tfidf_from_questions
 from dataset_cp_v2 import VQA_cp_Dataset, Image_Feature_Loader
 from model.fat_regat import build_fat_regat
@@ -109,8 +109,8 @@ def parse_args():
     '''
     Model
     '''
-    parser.add_argument('--relation_type', type=str, default='implicit',
-                        choices=["spatial", "semantic", "implicit"])
+    # parser.add_argument('--relation_type', type=str, default='implicit',
+    #                     choices=["spatial", "semantic", "implicit"])
     parser.add_argument('--fusion', type=str, default='mutan',
                         choices=["ban", "butd", "mutan"])
     parser.add_argument('--tfidf', action='store_true',
@@ -181,6 +181,7 @@ if __name__ == '__main__':
 
     dictionary = Dictionary.load_from_file(join(args.data_folder, 'glove/dictionary.pkl'))
     if args.dataset == "vqa_cp":
+        # @O: TODO
         coco_train_features = Image_Feature_Loader('train', 
                                                    args.relation_type,
                                                    adaptive=args.adaptive, 
@@ -205,13 +206,11 @@ if __name__ == '__main__':
     else:
         train_dset = VQAFeatureDataset('train', 
                                        dictionary, 
-                                       args.relation_type,
                                        adaptive=args.adaptive, 
                                        pos_emb_dim=args.imp_pos_emb_dim,
                                        dataroot=args.data_folder)
         val_dset = VQAFeatureDataset('val', 
                                      dictionary, 
-                                     args.relation_type, 
                                      adaptive=args.adaptive,
                                      pos_emb_dim=args.imp_pos_emb_dim, 
                                      dataroot=args.data_folder)
@@ -297,7 +296,7 @@ if __name__ == '__main__':
         eval_loader = DataLoader(val_dset, batch_size, shuffle=False,
                                  num_workers=4, collate_fn=trim_collate)
     
-    exp_name_list = [fusion_methods, args.relation_type, args.dataset, args.name]
+    exp_name_list = [fusion_methods, args.dataset, args.name]
     if args.job_id > 0: 
         exp_name_list = [str(args.job_id)] + exp_name_list
     
@@ -313,4 +312,3 @@ if __name__ == '__main__':
     logger = utils.Logger(join(args.output, 'log.txt'))
 
     train(model, train_loader, eval_loader, args, device)
-s

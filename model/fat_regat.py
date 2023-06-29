@@ -65,7 +65,10 @@ class FatRegat(nn.Module):
                                             q_emb_self_att)
         ]
 
+        print("--->shapes", [v.shape for v in v_emb])
+
         v_emb = torch.cat(v_emb, dim=-1)
+        print("--->concat shapes", v_emb.shape)       
         
         if self.fusion == "ban":
             joint_emb, att = self.joint_embedding(v_emb, q_emb_seq, b)
@@ -117,12 +120,12 @@ def build_fat_regat(dataset, args):
                                   dataset.num_ans_candidates, 0.5)
     gamma = 0
     if args.fusion == "ban":
-        joint_embedding = BAN(args.relation_dim, args.num_hid, args.ban_gamma)
+        joint_embedding = BAN(args.relation_dim * 3, args.num_hid, args.ban_gamma)
         gamma = args.ban_gamma
     elif args.fusion == "butd":
-        joint_embedding = BUTD(args.relation_dim, args.num_hid, args.num_hid)
+        joint_embedding = BUTD(args.relation_dim * 3, args.num_hid, args.num_hid)
     else:
-        joint_embedding = MuTAN(args.relation_dim, args.num_hid,
+        joint_embedding = MuTAN(args.relation_dim * 3, args.num_hid,
                                 dataset.num_ans_candidates, args.mutan_gamma)
         gamma = args.mutan_gamma
         classifier = None
