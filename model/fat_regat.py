@@ -65,10 +65,8 @@ class FatRegat(nn.Module):
                                             q_emb_self_att)
         ]
 
-        print("--->shapes", [v.shape for v in v_emb])
 
-        v_emb = torch.cat(v_emb, dim=-1)
-        print("--->concat shapes", v_emb.shape)       
+        v_emb = torch.cat(v_emb, dim=-1)    
         
         if self.fusion == "ban":
             joint_emb, att = self.joint_embedding(v_emb, q_emb_seq, b)

@@ -31,7 +31,7 @@ REGAT_SAVE_MODELS_EVAL_PATH="${REGAT_DATA_AND_MODELS_PATH}/saved_models/${USERNA
 ### Program Section
 
 # (Uncomment for training)
-python3 fat.py --config config/ban_vqa-o.json  --epochs 1 --name "fat_adamax_0.001_wd_0" --job_id ${SLURM_JOB_ID} --output ${REGAT_SAVE_MODELS_TRAIN_PATH}
+python3 fat.py --config config/ban_vqa-o.json  --epochs 25 --name "fat_adamax_0.001_wd_0" --job_id ${SLURM_JOB_ID} --output ${REGAT_SAVE_MODELS_TRAIN_PATH} --wandb run
 REGAT_SAVE_EXPERIMENT_TRAIN_PATH=$(find ${REGAT_SAVE_MODELS_TRAIN_PATH} -type d -name "${SLURM_JOB_ID}*" -print -quit)  
 #mv "./sbatch-scripts/${SLURM_JOB_ID}-"*".log" ${REGAT_SAVE_EXPERIMENT_TRAIN_PATH}
 
