@@ -33,7 +33,7 @@ REGAT_SAVE_MODELS_EVAL_PATH="${REGAT_DATA_AND_MODELS_PATH}/saved_models/${USERNA
 python3 main.py \
     --config config/ban_vqa-o.json \
     --relation_type spatial  \
-    --wandb \
+    --wandb "run"\
     --wandb_group nikolskyy \
     --epochs 25 \
     --name "layer_norm_adamax?init_lr=$1;peak_lr=$2;final_lr=$3;begin_constant=$4;begin_decay=$5" \
