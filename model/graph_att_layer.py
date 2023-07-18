@@ -33,7 +33,7 @@ class GraphSelfAttentionLayer(nn.Module):
         """
         super(GraphSelfAttentionLayer, self).__init__()
         # multi head
-        self.with_layer_norm = False
+        self.with_layer_norm = layer_norm
 
         self.fc_dim = num_heads
         self.feat_dim = feat_dim
@@ -57,10 +57,6 @@ class GraphSelfAttentionLayer(nn.Module):
             self.key_norm = nn.LayerNorm(int(self.dim[0]/self.num_heads))
             self.value_norm = nn.LayerNorm(self.dim[0])
             self.output_norm = nn.LayerNorm(feat_dim)
-
-
-
-        self.key = FCNet([feat_dim, self.dim[1]], None, dropout[0])
 
         self.linear_out_ = weight_norm(
                             nn.Conv2d(in_channels=self.fc_dim * feat_dim,
@@ -101,10 +97,8 @@ class GraphSelfAttentionLayer(nn.Module):
         # [batch_size,nongt_dim, self.dim[1] = feat_dim]
         k_data = self.key(nongt_roi_feat)
 
-
         # [batch_size,nongt_dim,  v = feat_dim]
         k_data = self.key(nongt_roi_feat)
-
 
         # [batch_size,nongt_dim, num_heads, feat_dim /num_heads]
         k_data_batch = k_data.view(batch_size, nongt_dim, self.num_heads,
@@ -115,7 +109,6 @@ class GraphSelfAttentionLayer(nn.Module):
 
         if self.with_layer_norm:    
             k_data_batch = self.key_norm(k_data_batch)
-
 
         # [batch_size,nongt_dim, feat_dim]
         v_data = nongt_roi_feat

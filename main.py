@@ -73,7 +73,8 @@ def parse_args():
     '''
     parser.add_argument('--optimizer', type=str, default='Adamax')          # choose between [SGD+Momentum, Adam, AdamW]
     parser.add_argument('--momentum', type=float, default=0.9)              # vary momentum values
-    parser.add_argument('--layer_norm', type=str, default='No')
+    parser.add_argument('--layer_norm', action='store_true',
+                        help='use LayerNorm in graph attention')
     
     '''
     For Weights & Biases logic
@@ -215,12 +216,6 @@ if __name__ == '__main__':
                                      adaptive=args.adaptive,
                                      pos_emb_dim=args.imp_pos_emb_dim, 
                                      dataroot=args.data_folder)
-
-    if args.layer_norm == 'No':
-        args.layer_norm = False
-    else:
-        args.layer_norm = True
-
 
     model = build_regat(val_dset, args).to(device)
     kwargs = { 'dataroot' : args.data_folder } # fix this
