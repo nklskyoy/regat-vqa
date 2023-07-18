@@ -17,7 +17,7 @@ from model.graph_att_layer import GraphSelfAttentionLayer
 class GAttNet(nn.Module):
     def __init__(self, dir_num, label_num, in_feat_dim, out_feat_dim,
                  nongt_dim=20, dropout=0.2, label_bias=True, 
-                 num_heads=16, pos_emb_dim=-1):
+                 num_heads=16, pos_emb_dim=-1, layer_norm=False):
         """ Attetion module with vectorized version
 
         Args:
@@ -46,7 +46,8 @@ class GAttNet(nn.Module):
                                 pos_emb_dim=pos_emb_dim,
                                 num_heads=num_heads,
                                 feat_dim=out_feat_dim,
-                                nongt_dim=nongt_dim)
+                                nongt_dim=nongt_dim,
+                                layer_norm=layer_norm)
             neighbor_net.append(g_att_layer)
         self.neighbor_net = nn.ModuleList(neighbor_net)
 
