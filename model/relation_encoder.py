@@ -110,7 +110,7 @@ class ExplicitRelationEncoder(nn.Module):
                                      num_heads=num_heads,
                                      label_bias=label_bias,
                                      pos_emb_dim=-1,
-                                     label_norm=layer_norm)
+                                     layer_norm=layer_norm)
 
     def forward(self, v, exp_adj_matrix, q):
         """

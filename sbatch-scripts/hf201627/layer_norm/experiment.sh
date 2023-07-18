@@ -1,7 +1,7 @@
 #!/usr/local_rwth/bin/zsh 
 
 ### SBATCH Section
-
+#SBATCH --account=lect0099
 #SBATCH --job-name=VQA-ReGAT
 #SBATCH --output=%j-output.log
 #SBATCH --error=%j-error.log
@@ -36,8 +36,9 @@ python3 main.py \
     --wandb "run"\
     --wandb_group nikolskyy \
     --epochs 25 \
-    --name "layer_norm_adamax?init_lr=$1;peak_lr=$2;final_lr=$3;begin_constant=$4;begin_decay=$5" \
+    --name "layer_norm_adamax?init_lr=$1;peak_lr=$2;final_lr=$3;begin_constant=$4;begin_decay=$5;layer_norm=$6" \
     --optimizer "Adamax" \
+    --layer_norm $6 \
     --init_lr $1 \
     --peak_lr $2 \
     --final_lr $3 \
