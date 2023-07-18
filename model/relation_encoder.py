@@ -33,7 +33,7 @@ def q_expand_v_cat(q, v, mask=True):
 class ImplicitRelationEncoder(nn.Module):
     def __init__(self, v_dim, q_dim, out_dim, dir_num, pos_emb_dim,
                  nongt_dim, num_heads=16, num_steps=1,
-                 residual_connection=True, label_bias=True):
+                 residual_connection=True, label_bias=True, layer_norm=False):
         super(ImplicitRelationEncoder, self).__init__()
         self.v_dim = v_dim
         self.q_dim = q_dim
@@ -53,7 +53,9 @@ class ImplicitRelationEncoder(nn.Module):
                                      nongt_dim=nongt_dim,
                                      label_bias=label_bias,
                                      num_heads=num_heads,
-                                     pos_emb_dim=pos_emb_dim)
+                                     pos_emb_dim=pos_emb_dim,
+                                     layer_norm=layer_norm
+                                     )
 
     def forward(self, v, position_embedding, q):
         """
@@ -86,7 +88,8 @@ class ImplicitRelationEncoder(nn.Module):
 class ExplicitRelationEncoder(nn.Module):
     def __init__(self, v_dim, q_dim, out_dim, dir_num, label_num,
                  nongt_dim=20, num_heads=16, num_steps=1,
-                 residual_connection=True, label_bias=True):
+                 residual_connection=True, label_bias=True,
+                 layer_norm=False):
         super(ExplicitRelationEncoder, self).__init__()
         self.v_dim = v_dim
         self.q_dim = q_dim
@@ -106,7 +109,8 @@ class ExplicitRelationEncoder(nn.Module):
                                      nongt_dim=nongt_dim,
                                      num_heads=num_heads,
                                      label_bias=label_bias,
-                                     pos_emb_dim=-1)
+                                     pos_emb_dim=-1,
+                                     label_norm=layer_norm)
 
     def forward(self, v, exp_adj_matrix, q):
         """

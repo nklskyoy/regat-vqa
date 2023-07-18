@@ -17,7 +17,7 @@ from torch.nn.utils.weight_norm import weight_norm
 
 class GraphSelfAttentionLayer(nn.Module):
     def __init__(self, feat_dim, nongt_dim=20, pos_emb_dim=-1,
-                 num_heads=16, dropout=[0.2, 0.5]):
+                 num_heads=16, dropout=[0.2, 0.5],layer_norm=False):
         """ Attetion module with vectorized version
 
         Args:
@@ -33,6 +33,8 @@ class GraphSelfAttentionLayer(nn.Module):
         """
         super(GraphSelfAttentionLayer, self).__init__()
         # multi head
+        self.with_layer_norm = False
+
         self.fc_dim = num_heads
         self.feat_dim = feat_dim
         self.dim = (feat_dim, feat_dim, feat_dim)
@@ -50,10 +52,11 @@ class GraphSelfAttentionLayer(nn.Module):
         self.key = FCNet([feat_dim, self.dim[1]], None, dropout[0])
         self.value = FCNet([feat_dim, self.dim[1]], None, dropout[0])
 
-        self.query_norm = nn.LayerNorm(int(self.dim[0]/self.num_heads))
-        self.key_norm = nn.LayerNorm(int(self.dim[0]/self.num_heads))
-        self.value_norm = nn.LayerNorm(self.dim[0])
-        self.output_norm = nn.LayerNorm(feat_dim)
+        if self.with_layer_norm:
+            self.query_norm = nn.LayerNorm(int(self.dim[0]/self.num_heads))
+            self.key_norm = nn.LayerNorm(int(self.dim[0]/self.num_heads))
+            self.value_norm = nn.LayerNorm(self.dim[0])
+            self.output_norm = nn.LayerNorm(feat_dim)
 
 
 
@@ -91,9 +94,9 @@ class GraphSelfAttentionLayer(nn.Module):
         # [batch_size,num_heads, num_rois, feat_dim /num_heads]
         q_data_batch = torch.transpose(q_data_batch, 1, 2)
 
-
-        # [batch_size,num_heads, num_rois, feat_dim /num_heads]
-        q_data_batch = self.query_norm(q_data_batch)
+        if self.with_layer_norm:    
+            # [batch_size,num_heads, num_rois, feat_dim /num_heads]
+            q_data_batch = self.query_norm(q_data_batch)
 
         # [batch_size,nongt_dim, self.dim[1] = feat_dim]
         k_data = self.key(nongt_roi_feat)
@@ -110,7 +113,8 @@ class GraphSelfAttentionLayer(nn.Module):
         # [batch_size,num_heads, nongt_dim, feat_dim /num_heads]
         k_data_batch = torch.transpose(k_data_batch, 1, 2)
 
-        k_data_batch = self.key_norm(k_data_batch)
+        if self.with_layer_norm:    
+            k_data_batch = self.key_norm(k_data_batch)
 
 
         # [batch_size,nongt_dim, feat_dim]
@@ -176,9 +180,10 @@ class GraphSelfAttentionLayer(nn.Module):
 
         # output_t, [batch_size, num_rois * fc_dim, feat_dim]
         output_t = torch.matmul(aff_softmax_reshape, v_data)
-
-        # output_t, [batch_size, num_rois * fc_dim, feat_dim]
-        output_t = self.output_norm(output_t)
+        
+        if self.with_layer_norm:    
+            # output_t, [batch_size, num_rois * fc_dim, feat_dim]
+            output_t = self.output_norm(output_t)
 
         # output_t, [batch_size*num_rois, fc_dim * feat_dim, 1, 1]
         output_t = output_t.view((-1, self.fc_dim * self.feat_dim, 1, 1))

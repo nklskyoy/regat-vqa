@@ -73,7 +73,7 @@ def parse_args():
     '''
     parser.add_argument('--optimizer', type=str, default='Adamax')          # choose between [SGD+Momentum, Adam, AdamW]
     parser.add_argument('--momentum', type=float, default=0.9)              # vary momentum values
-    
+    parser.add_argument('__layer_norm', action='store_true')
     
     '''
     For Weights & Biases logic
