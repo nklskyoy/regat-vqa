@@ -80,6 +80,12 @@ def build_regat(dataset, args):
     q_emb = QuestionEmbedding(300 if 'c' not in args.op else 600,
                               args.num_hid, 1, False, .0)
     q_att = QuestionSelfAttention(args.num_hid, .2)
+    
+    # Quick and dirty fix (--layer_norm is not passed to args)
+    try:
+        layer_norm = args.layer_norm
+    except AttributeError:
+        layer_norm = False 
 
     if args.relation_type == "semantic":
         v_relation = ExplicitRelationEncoder(
@@ -88,7 +94,7 @@ def build_regat(dataset, args):
                         num_heads=args.num_heads,
                         num_steps=args.num_steps, nongt_dim=args.nongt_dim,
                         residual_connection=args.residual_connection,
-                        label_bias=args.label_bias, layer_norm=args.layer_norm)
+                        label_bias=args.label_bias, layer_norm=layer_norm)
     elif args.relation_type == "spatial":
         v_relation = ExplicitRelationEncoder(
                         dataset.v_dim, args.num_hid, args.relation_dim,
@@ -96,14 +102,14 @@ def build_regat(dataset, args):
                         num_heads=args.num_heads,
                         num_steps=args.num_steps, nongt_dim=args.nongt_dim,
                         residual_connection=args.residual_connection,
-                        label_bias=args.label_bias, layer_norm=args.layer_norm)
+                        label_bias=args.label_bias, layer_norm=layer_norm)
     else:
         v_relation = ImplicitRelationEncoder(
                         dataset.v_dim, args.num_hid, args.relation_dim,
                         args.dir_num, args.imp_pos_emb_dim, args.nongt_dim,
                         num_heads=args.num_heads, num_steps=args.num_steps,
                         residual_connection=args.residual_connection,
-                        label_bias=args.label_bias, layer_norm=args.layer_norm)
+                        label_bias=args.label_bias, layer_norm=layer_norm)
 
     classifier = SimpleClassifier(args.num_hid, args.num_hid * 2,
                                   dataset.num_ans_candidates, 0.5)
