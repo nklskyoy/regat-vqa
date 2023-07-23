@@ -65,15 +65,16 @@ def parse_args():
                         help='save optimizer')
     parser.add_argument('--log_interval', type=int, default=-1,
                         help='Print log for certain steps')
-    parser.add_argument('--seed', type=int, default=42, 
-                        help='random seed')                                 # fixed seed to 42 instead of -1
+    parser.add_argument('--seed', type=int, default=-1, 
+                        help='random seed')
     
     '''
     For fine-tuning (Optimizer settings, LR schedules, Batch/Layer-Norm)
     '''
     parser.add_argument('--optimizer', type=str, default='Adamax')          # choose between [SGD+Momentum, Adam, AdamW]
     parser.add_argument('--momentum', type=float, default=0.9)              # vary momentum values
-    
+    parser.add_argument('--layer_norm', action='store_true',
+                        help='use LayerNorm in graph attention')
     
     '''
     For Weights & Biases logic
@@ -171,6 +172,13 @@ if __name__ == '__main__':
     device = torch.device("cuda")
     batch_size = args.batch_size * n_device
 
+    # Restore original logic for experiments...
+    if args.seed == -1:
+        args.seed = random.randint(1, 10000)
+        print(f"Choose random seed {args.seed}")
+    else:
+        print(f"Using random seed {args.seed}")
+    
     torch.backends.cudnn.benchmark = True    
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed_all(args.seed)
