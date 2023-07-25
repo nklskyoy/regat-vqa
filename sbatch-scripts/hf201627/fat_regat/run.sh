@@ -4,7 +4,13 @@ BASE_DIR="/rwthfs/rz/cluster/home/hf201627/dev/lab2/vqa_regat/sbatch-scripts/hf2
 
 tail -n +2 "${BASE_DIR}/hyperparam.csv" | while IFS=";" read -r init_lr peak_lr final_lr begin_constant begin_decay
 do
-        sbatch ${BASE_DIR}/experiment.sh \
+        echo "init_lr: $init_lr"
+        echo "peak_lr: $peak_lr"
+        echo "final_lr: $final_lr"
+        echo "begin_constant: $begin_constant"
+        echo "begin_decay: $begin_decay"
+
+        sh ${BASE_DIR}/experiment.sh \
             "$init_lr"\
             "$peak_lr"\
             "$final_lr"\

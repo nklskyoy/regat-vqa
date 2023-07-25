@@ -65,15 +65,16 @@ def parse_args():
                         help='save optimizer')
     parser.add_argument('--log_interval', type=int, default=-1,
                         help='Print log for certain steps')
-    parser.add_argument('--seed', type=int, default=42, 
-                        help='random seed')                                 # fixed seed to 42 instead of -1
+    parser.add_argument('--seed', type=int, default=-1, 
+                        help='random seed')
     
     '''
     For fine-tuning (Optimizer settings, LR schedules, Batch/Layer-Norm)
     '''
     parser.add_argument('--optimizer', type=str, default='Adamax')          # choose between [SGD+Momentum, Adam, AdamW]
     parser.add_argument('--momentum', type=float, default=0.9)              # vary momentum values
-    
+    parser.add_argument('--layer_norm', action='store_true',
+                        help='use LayerNorm in graph attention')
     
     '''
     For Weights & Biases logic
@@ -109,8 +110,8 @@ def parse_args():
     '''
     Model
     '''
-    # parser.add_argument('--relation_type', type=str, default='implicit',
-    #                     choices=["spatial", "semantic", "implicit"])
+    parser.add_argument('--relation_type', type=str, default='implicit',
+                        choices=["spatial", "semantic", "implicit"])
     parser.add_argument('--fusion', type=str, default='mutan',
                         choices=["ban", "butd", "mutan"])
     parser.add_argument('--tfidf', action='store_true',
