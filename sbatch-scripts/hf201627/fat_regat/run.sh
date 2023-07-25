@@ -10,7 +10,7 @@ do
         echo "begin_constant: $begin_constant"
         echo "begin_decay: $begin_decay"
 
-        sh ${BASE_DIR}/experiment.sh \
+        sbatch ${BASE_DIR}/experiment.sh \
             "$init_lr"\
             "$peak_lr"\
             "$final_lr"\

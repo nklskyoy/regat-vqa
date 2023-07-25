@@ -31,5 +31,6 @@
     "nongt_dim": 20,
     "num_steps": 1,
     "residual_connection": true,
-    "label_bias": false
+    "label_bias": false,
+    "wandb": "run"
 }

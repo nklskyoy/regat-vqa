@@ -159,6 +159,9 @@ def parse_args():
     # can use config files
     parser.add_argument('--config', help='JSON config files')
 
+    args,unknown = parser.parse_known_args()
+    print(args)
+
     args = parse_with_config(parser)
     return args
 

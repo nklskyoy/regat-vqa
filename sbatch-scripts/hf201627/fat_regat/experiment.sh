@@ -23,24 +23,18 @@ REGAT_DATA_AND_MODELS_PATH="/rwthfs/rz/cluster/hpcwork/lect0099"
 
 REGAT_SAVE_MODELS_TRAIN_PATH="${REGAT_DATA_AND_MODELS_PATH}/saved_models/${USERNAME}/train"
 REGAT_SAVE_MODELS_EVAL_PATH="${REGAT_DATA_AND_MODELS_PATH}/saved_models/${USERNAME}/eval"
-echo "Save models to: ${REGAT_SAVE_MODELS_TRAIN_PATH}"
-echo $1
-# By default, run.sh operates in code directory
-# cd ${REGAT_LOCAL_CODE_PATH}
-#${SLURM_JOB_ID}
+
 ### Program Section
-python3 main.py \
-    --config config/ban_vqa.json  \
-    --epochs 30 \
-    --output "${REGAT_SAVE_MODELS_TRAIN_PATH}" \ 
+python3 fat.py  \
+    --config config/ban_vqa.json \
+    --epochs=30 --output=${REGAT_SAVE_MODELS_TRAIN_PATH} \
     --init_lr $1 \
     --peak_lr $2 \
-    --final_lr 0.1 \
-    --begin_constant 15 \
-    --begin_decay 100 \
-    --lr_scheduler "custom" \
-    --name "fat_concat?opt=adamax;init_lr=$1;peak_lr=$2;final_lr=$3;begin_constant=$4;begin_decay=$5" \ 
-    --wandb 
+    --final_lr $3 \
+    --begin_constant $4 \
+    --begin_decay $5 \
+    --lr_scheduler custom \
+    --name "fat_concat?opt=adamax;init_lr=$1;peak_lr=$2;final_lr=$3;begin_constant=$4;begin_decay=$5" 
 
 
 
